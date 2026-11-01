@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoomBook mockup — My bookings</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-family); font-size: var(--font-size-md); line-height: 1.5; }
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: var(--font-size-xl); }
+    h2 { font-size: var(--font-size-lg); }
+    p { margin: 0; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) var(--space-5); background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+    .brand { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: var(--color-primary); }
+    .nav { display: flex; gap: var(--space-4); margin-right: auto; margin-left: var(--space-5); }
+    .nav a { color: var(--color-text-muted); text-decoration: none; }
+    .nav a[aria-current="page"] { color: var(--color-text); font-weight: var(--font-weight-semibold); }
+    .user-picker { display: flex; align-items: center; gap: var(--space-2); }
+    .user-picker span { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .app-main { max-width: 960px; margin: 0 auto; padding: var(--space-5); }
+    .page-header { margin-bottom: var(--space-5); }
+    .subtitle, .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); padding: var(--space-4); }
+    .stack { display: grid; gap: var(--space-3); }
+    .btn { display: inline-flex; align-items: center; height: var(--control-height); padding: 0 var(--space-4); border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-contrast); }
+    .btn-danger { color: var(--color-danger); border-color: var(--color-danger-border); }
+    .field { display: grid; gap: var(--space-1); align-content: start; }
+    .field label { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+    input, select { height: var(--control-height); padding: 0 var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); font: inherit; }
+    .field input, .field select { width: 100%; min-width: 0; }
+    .field.invalid input, .field.invalid select { border-color: var(--color-danger); }
+    .field-error { color: var(--color-danger); font-size: var(--font-size-sm); }
+    .hint { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .alert { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid; }
+    .alert-danger { color: var(--color-danger); background: var(--color-danger-bg); border-color: var(--color-danger-border); }
+    .alert-success { color: var(--color-success); background: var(--color-success-bg); border-color: var(--color-success-border); }
+    .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+    .chip { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-chip-bg); color: var(--color-chip-text); font-size: var(--font-size-xs); }
+    .timeline { position: relative; padding-bottom: var(--space-5); }
+    .track { position: relative; height: var(--timeline-height); border-radius: var(--radius-sm); background: var(--color-free); border: 1px solid var(--color-free-border); overflow: hidden; }
+    .busy { position: absolute; top: 0; bottom: 0; background: var(--color-busy); border-left: 1px solid var(--color-surface); border-right: 1px solid var(--color-surface); }
+    .hours { position: absolute; left: 0; right: 0; bottom: 0; height: var(--space-5); font-size: var(--font-size-xs); color: var(--color-text-muted); }
+    .hours span { position: absolute; top: var(--space-1); transform: translateX(-50%); }
+    .empty { text-align: center; padding: var(--space-6) var(--space-4); color: var(--color-text-muted); }
+    /* Mockup-only annotation of the state shown below it; not part of the UI */
+    .state { margin: var(--space-6) 0 var(--space-3); padding: var(--space-1) var(--space-3); border: 1px dashed var(--color-text-muted); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-muted); font-family: monospace; }
+
+    section.card { margin-bottom: var(--space-4); }
+    section.card h2 { margin-bottom: var(--space-3); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: var(--space-2) var(--space-3); border-top: 1px solid var(--color-border); }
+    th { font-size: var(--font-size-sm); color: var(--color-text-muted); font-weight: var(--font-weight-semibold); border-top: 0; }
+    td:last-child { text-align: right; }
+    .past td { color: var(--color-text-muted); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <span class="brand">RoomBook</span>
+    <nav class="nav"><a href="room-list.html">Rooms</a><a href="find-room.html">Find a room</a><a href="my-bookings.html" aria-current="page">My bookings</a></nav>
+    <label class="user-picker"><span>Acting as</span>
+      <select><option>An Nguyen (admin)</option><option selected>Binh Tran</option><option>Chi Le</option></select>
+    </label>
+  </header>
+  <main class="app-main">
+    <div class="page-header">
+      <h1>My bookings</h1>
+      <p class="subtitle">Bookings of the user chosen in "Acting as" · times in office time (Asia/Ho_Chi_Minh)</p>
+    </div>
+
+    <p class="state">State: default — upcoming bookings (soonest first) can be cancelled; past bookings (most recent first) cannot</p>
+    <section class="card">
+      <h2>Upcoming</h2>
+      <table>
+        <thead><tr><th>Date</th><th>Time</th><th>Room</th><th>Title</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          <tr><td>Mon 2 Nov 2026</td><td>14:00–15:30</td><td>Ha Long</td><td>Customer call</td><td><button class="btn btn-danger" type="button">Cancel</button></td></tr>
+          <tr><td>Wed 4 Nov 2026</td><td>10:00–10:30</td><td>Hue</td><td>1:1 with An</td><td><button class="btn btn-danger" type="button">Cancel</button></td></tr>
+          <tr><td>Fri 6 Nov 2026</td><td>15:00–16:00</td><td>Hoi An</td><td>Sprint review</td><td><button class="btn btn-danger" type="button">Cancel</button></td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="card past">
+      <h2>Past</h2>
+      <table>
+        <thead><tr><th>Date</th><th>Time</th><th>Room</th><th>Title</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          <tr><td>Fri 30 Oct 2026</td><td>09:00–10:00</td><td>Ha Long</td><td>Weekly planning</td><td></td></tr>
+          <tr><td>Thu 29 Oct 2026</td><td>13:30–14:00</td><td>Sa Pa</td><td>Call with supplier</td><td></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <p class="state">State: after cancelling (message above the lists; the row is removed)</p>
+    <div class="alert alert-success" role="status">Booking cancelled: Ha Long, Mon 2 Nov 2026, 14:00–15:30.</div>
+
+    <p class="state">State: no upcoming bookings</p>
+    <section class="card">
+      <h2>Upcoming</h2>
+      <div class="empty">You have no upcoming bookings. <a href="find-room.html">Find a free room</a></div>
+    </section>
+  </main>
+</body>
+</html>

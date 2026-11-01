@@ -1,0 +1,64 @@
+/*
+ * RoomBook design tokens. Imported by the mockups in screens/ and by the app
+ * (frontend/src/main.ts imports '@design/tokens.css'). Use these variables instead of raw values.
+ */
+:root {
+  /* Colour: surfaces and text */
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-border: #dde1e6;
+  --color-text: #1d2433;
+  --color-text-muted: #5f6b7a;
+
+  /* Colour: actions */
+  --color-primary: #2459d6;
+  --color-primary-hover: #1c47ad;
+  --color-primary-contrast: #ffffff;
+  --color-focus: #8fb2ff;
+
+  /* Colour: availability */
+  --color-free: #e6f6ec;
+  --color-free-border: #b7e2c6;
+  --color-busy: #e8743b;
+  --color-busy-text: #ffffff;
+
+  /* Colour: status */
+  --color-danger: #b42318;
+  --color-danger-bg: #fef3f2;
+  --color-danger-border: #fecdca;
+  --color-success: #067647;
+  --color-success-bg: #ecfdf3;
+  --color-success-border: #abefc6;
+
+  /* Colour: chips (equipment) */
+  --color-chip-bg: #eef2f8;
+  --color-chip-text: #344054;
+
+  /* Typography */
+  --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-md: 0.9375rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+
+  /* Spacing (4px scale) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Shape and depth */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 10%);
+
+  /* Components */
+  --timeline-height: 28px;
+  --control-height: 36px;
+}

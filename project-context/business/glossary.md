@@ -1,0 +1,17 @@
+# Glossary
+
+- **Room** — a bookable meeting room; has a unique name, a capacity and a set of equipment.
+- **Capacity** — the maximum number of people a room holds.
+- **Equipment** — fixed features of a room: `TV`, `WHITEBOARD`, `VIDEO_CONFERENCE` (shown as "TV", "Whiteboard", "Video conference").
+- **Active room** — a room in service; only active rooms are shown and considered for availability (BR-1).
+- **Booking** — a reservation of one room by one user for a time interval, with a title. Stored with UTC start and end instants.
+- **Slot / 15-minute step** — the time grid for bookings: start and end times fall on :00, :15, :30 or :45 (BR-2).
+- **Busy interval** — the start and end (UTC) of a booking, as shown on a room's timeline.
+- **Availability** — for a given office day, the busy intervals of each active room; any other time is free.
+- **Office time zone** — Asia/Ho_Chi_Minh; the zone in which calendar dates are understood and times are shown to users.
+- **Office day** — a calendar date in the office time zone, from 00:00 to 24:00 office time (in UTC: 17:00 the previous day to 17:00).
+- **Office time** — a wall-clock time in the office time zone, e.g. "09:00".
+- **UTC instant** — an absolute point in time in ISO 8601 with `Z`, e.g. `2026-11-02T02:00:00Z` (= 09:00 office time). All stored and transferred times are UTC instants.
+- **Acting user** — the employee chosen in the "Acting as" picker; sent to the API as `X-User-Id`.
+- **Admin** — a user with role `ADMIN` (office admin); other users have role `EMPLOYEE`.
+- **Timeline** — the bar on the room list showing 08:00–18:00 office time with busy blocks. A display range only, not a booking rule.

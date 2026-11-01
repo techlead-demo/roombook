@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoomBook mockup — Room list with today's availability</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-family); font-size: var(--font-size-md); line-height: 1.5; }
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: var(--font-size-xl); }
+    h2 { font-size: var(--font-size-lg); }
+    p { margin: 0; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) var(--space-5); background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+    .brand { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: var(--color-primary); }
+    .nav { display: flex; gap: var(--space-4); margin-right: auto; margin-left: var(--space-5); }
+    .nav a { color: var(--color-text-muted); text-decoration: none; }
+    .nav a[aria-current="page"] { color: var(--color-text); font-weight: var(--font-weight-semibold); }
+    .user-picker { display: flex; align-items: center; gap: var(--space-2); }
+    .user-picker span { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .app-main { max-width: 960px; margin: 0 auto; padding: var(--space-5); }
+    .page-header { margin-bottom: var(--space-5); }
+    .subtitle, .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); padding: var(--space-4); }
+    .stack { display: grid; gap: var(--space-3); }
+    .btn { display: inline-flex; align-items: center; height: var(--control-height); padding: 0 var(--space-4); border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-contrast); }
+    .btn-danger { color: var(--color-danger); border-color: var(--color-danger-border); }
+    .field { display: grid; gap: var(--space-1); align-content: start; }
+    .field label { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+    input, select { height: var(--control-height); padding: 0 var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); font: inherit; }
+    .field input, .field select { width: 100%; min-width: 0; }
+    .field.invalid input, .field.invalid select { border-color: var(--color-danger); }
+    .field-error { color: var(--color-danger); font-size: var(--font-size-sm); }
+    .hint { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .alert { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid; }
+    .alert-danger { color: var(--color-danger); background: var(--color-danger-bg); border-color: var(--color-danger-border); }
+    .alert-success { color: var(--color-success); background: var(--color-success-bg); border-color: var(--color-success-border); }
+    .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+    .chip { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-chip-bg); color: var(--color-chip-text); font-size: var(--font-size-xs); }
+    .timeline { position: relative; padding-bottom: var(--space-5); }
+    .track { position: relative; height: var(--timeline-height); border-radius: var(--radius-sm); background: var(--color-free); border: 1px solid var(--color-free-border); overflow: hidden; }
+    .busy { position: absolute; top: 0; bottom: 0; background: var(--color-busy); border-left: 1px solid var(--color-surface); border-right: 1px solid var(--color-surface); }
+    .hours { position: absolute; left: 0; right: 0; bottom: 0; height: var(--space-5); font-size: var(--font-size-xs); color: var(--color-text-muted); }
+    .hours span { position: absolute; top: var(--space-1); transform: translateX(-50%); }
+    .empty { text-align: center; padding: var(--space-6) var(--space-4); color: var(--color-text-muted); }
+    /* Mockup-only annotation of the state shown below it; not part of the UI */
+    .state { margin: var(--space-6) 0 var(--space-3); padding: var(--space-1) var(--space-3); border: 1px dashed var(--color-text-muted); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-muted); font-family: monospace; }
+
+    .room-list { margin: 0; padding: 0; list-style: none; }
+    .room-card { display: grid; grid-template-columns: 200px 1fr auto; gap: var(--space-5); align-items: center; }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <span class="brand">RoomBook</span>
+    <nav class="nav"><a href="room-list.html" aria-current="page">Rooms</a><a href="find-room.html">Find a room</a><a href="my-bookings.html">My bookings</a></nav>
+    <label class="user-picker"><span>Acting as</span>
+      <select><option>An Nguyen (admin)</option><option selected>Binh Tran</option><option>Chi Le</option></select>
+    </label>
+  </header>
+  <main class="app-main">
+    <div class="page-header">
+      <h1>Rooms</h1>
+      <p class="subtitle">Today's availability · Mon 2 Nov 2026 · times in office time (Asia/Ho_Chi_Minh)</p>
+    </div>
+
+    <p class="state">State: default — active rooms ordered by name; orange = busy, green = free (08:00–18:00 office time)</p>
+    <ul class="stack room-list">
+      <li class="card room-card">
+        <div><h2>Da Lat</h2><p class="muted">Up to 4 people</p><ul class="chips"><li class="chip">Whiteboard</li></ul></div>
+        <div class="timeline"><div class="track"><div class="busy" style="left: 30%; width: 12.5%" title="Busy 11:00–12:15"></div></div><div class="hours"><span style="left: 0%">08</span><span style="left: 10%">09</span><span style="left: 20%">10</span><span style="left: 30%">11</span><span style="left: 40%">12</span><span style="left: 50%">13</span><span style="left: 60%">14</span><span style="left: 70%">15</span><span style="left: 80%">16</span><span style="left: 90%">17</span><span style="left: 100%">18</span></div></div>
+        <a class="btn" href="booking-form.html">Book</a>
+      </li>
+      <li class="card room-card">
+        <div><h2>Ha Long</h2><p class="muted">Up to 12 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Whiteboard</li><li class="chip">Video conference</li></ul></div>
+        <div class="timeline"><div class="track"><div class="busy" style="left: 10%; width: 10%" title="Busy 09:00–10:00"></div><div class="busy" style="left: 60%; width: 15%" title="Busy 14:00–15:30"></div></div><div class="hours"><span style="left: 0%">08</span><span style="left: 10%">09</span><span style="left: 20%">10</span><span style="left: 30%">11</span><span style="left: 40%">12</span><span style="left: 50%">13</span><span style="left: 60%">14</span><span style="left: 70%">15</span><span style="left: 80%">16</span><span style="left: 90%">17</span><span style="left: 100%">18</span></div></div>
+        <a class="btn" href="booking-form.html">Book</a>
+      </li>
+      <li class="card room-card">
+        <div><h2>Hoi An</h2><p class="muted">Up to 8 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Video conference</li></ul></div>
+        <div class="timeline"><div class="track"><div class="busy" style="left: 25%; width: 10%" title="Busy 10:30–11:30"></div></div><div class="hours"><span style="left: 0%">08</span><span style="left: 10%">09</span><span style="left: 20%">10</span><span style="left: 30%">11</span><span style="left: 40%">12</span><span style="left: 50%">13</span><span style="left: 60%">14</span><span style="left: 70%">15</span><span style="left: 80%">16</span><span style="left: 90%">17</span><span style="left: 100%">18</span></div></div>
+        <a class="btn" href="booking-form.html">Book</a>
+      </li>
+      <li class="card room-card">
+        <div><h2>Hue</h2><p class="muted">Up to 6 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Whiteboard</li></ul></div>
+        <div class="timeline"><div class="track"><div class="busy" style="left: 5%; width: 5%" title="Busy 08:30–09:00"></div><div class="busy" style="left: 80%; width: 10%" title="Busy 16:00–17:00"></div></div><div class="hours"><span style="left: 0%">08</span><span style="left: 10%">09</span><span style="left: 20%">10</span><span style="left: 30%">11</span><span style="left: 40%">12</span><span style="left: 50%">13</span><span style="left: 60%">14</span><span style="left: 70%">15</span><span style="left: 80%">16</span><span style="left: 90%">17</span><span style="left: 100%">18</span></div></div>
+        <a class="btn" href="booking-form.html">Book</a>
+      </li>
+      <li class="card room-card">
+        <div><h2>Phu Quoc</h2><p class="muted">Up to 20 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Whiteboard</li><li class="chip">Video conference</li></ul></div>
+        <div class="timeline"><div class="track"><div class="busy" style="left: 50%; width: 10%" title="Busy 13:00–14:00"></div></div><div class="hours"><span style="left: 0%">08</span><span style="left: 10%">09</span><span style="left: 20%">10</span><span style="left: 30%">11</span><span style="left: 40%">12</span><span style="left: 50%">13</span><span style="left: 60%">14</span><span style="left: 70%">15</span><span style="left: 80%">16</span><span style="left: 90%">17</span><span style="left: 100%">18</span></div></div>
+        <a class="btn" href="booking-form.html">Book</a>
+      </li>
+      <li class="card room-card">
+        <div><h2>Sa Pa</h2><p class="muted">Up to 2 people</p><ul class="chips"></ul></div>
+        <div class="timeline"><div class="track"></div><div class="hours"><span style="left: 0%">08</span><span style="left: 10%">09</span><span style="left: 20%">10</span><span style="left: 30%">11</span><span style="left: 40%">12</span><span style="left: 50%">13</span><span style="left: 60%">14</span><span style="left: 70%">15</span><span style="left: 80%">16</span><span style="left: 90%">17</span><span style="left: 100%">18</span></div></div>
+        <a class="btn" href="booking-form.html">Book</a>
+      </li>
+    </ul>
+
+    <p class="state">State: loading</p>
+    <div class="card muted">Loading rooms…</div>
+
+    <p class="state">State: error (API failed; show the ProblemDetail detail when there is one)</p>
+    <div class="alert alert-danger" role="alert">Could not load rooms. Try again later.</div>
+
+    <p class="state">State: success message after a booking was made (shown above the list)</p>
+    <div class="alert alert-success" role="status">Booked Ha Long, Mon 2 Nov 2026, 11:00–12:00.</div>
+  </main>
+</body>
+</html>

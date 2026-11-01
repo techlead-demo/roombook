@@ -1,0 +1,73 @@
+// All API date-times are ISO 8601 UTC strings. These helpers convert them to the office
+// time zone for display only; never send office-local times to the API.
+
+interface ZonedParts {
+  year: number
+  month: number
+  day: number
+  hour: number
+  minute: number
+}
+
+function zonedParts(instant: Date | string, timeZone: string): ZonedParts {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  })
+  const parts = Object.fromEntries(
+    formatter.formatToParts(new Date(instant)).map((part) => [part.type, part.value]),
+  )
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+  }
+}
+
+const pad = (value: number): string => String(value).padStart(2, '0')
+
+/** Calendar date (YYYY-MM-DD) of `instant` in `timeZone`. */
+export function toOfficeDate(instant: Date | string, timeZone: string): string {
+  const { year, month, day } = zonedParts(instant, timeZone)
+  return `${year}-${pad(month)}-${pad(day)}`
+}
+
+/** Wall-clock time "HH:mm" (24-hour) of `instant` in `timeZone`. */
+export function formatOfficeTime(instant: Date | string, timeZone: string): string {
+  const { hour, minute } = zonedParts(instant, timeZone)
+  return `${pad(hour)}:${pad(minute)}`
+}
+
+/** "HH:mm–HH:mm" in `timeZone`. */
+export function formatOfficeTimeRange(startAt: string, endAt: string, timeZone: string): string {
+  return `${formatOfficeTime(startAt, timeZone)}–${formatOfficeTime(endAt, timeZone)}`
+}
+
+/**
+ * Minutes from midnight of `date` (YYYY-MM-DD) in `timeZone` to `instant`.
+ * Negative when `instant` falls on an earlier day, 1440 or more when it falls on a later day.
+ */
+export function minutesFromOfficeMidnight(instant: Date | string, date: string, timeZone: string): number {
+  const { year, month, day, hour, minute } = zonedParts(instant, timeZone)
+  const [dateYear, dateMonth, dateDay] = date.split('-').map(Number)
+  const dayDifference = (Date.UTC(year, month - 1, day) - Date.UTC(dateYear, dateMonth - 1, dateDay)) / 86_400_000
+  return dayDifference * 1440 + hour * 60 + minute
+}
+
+/** Display form of a calendar date (YYYY-MM-DD), e.g. "Mon 2 Nov 2026". */
+export function formatCalendarDate(date: string): string {
+  const [year, month, day] = date.split('-').map(Number)
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+      .formatToParts(new Date(Date.UTC(year, month - 1, day)))
+      .map((part) => [part.type, part.value]),
+  )
+  return `${parts.weekday} ${parts.day} ${parts.month} ${parts.year}`
+}

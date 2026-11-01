@@ -1,0 +1,22 @@
+# Dependencies and build output
+node_modules/
+frontend/dist/
+backend/target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Local H2 database
+backend/data/
+
+# Playwright output
+test-results/
+playwright-report/
+blob-report/
+
+# Environment and editors
+.env
+.env.*
+.idea/
+.vscode/
+*.iml
+.DS_Store
+*.log
