@@ -19,4 +19,7 @@
 - **UTC instant** — an absolute point in time in ISO 8601 with `Z`, e.g. `2026-11-02T02:00:00Z` (= 09:00 office time). All stored and transferred times are UTC instants.
 - **Acting user** — the employee chosen in the "Acting as" picker; sent to the API as `X-User-Id`.
 - **Admin** — a user with role `ADMIN` (office admin); other users have role `EMPLOYEE`.
+- **Free room** — a room with no booking overlapping a given time range; touching bookings do not count (BR-12).
+- **Attendees** — the number of people a search is for; a fitting room's capacity is at least this number (BR-13).
+- **Find a free room** — the screen where a user searches by date, time range, attendees and equipment for the rooms that fit (BR-13) and books one from the results.
 - **Timeline** — the bar on the room list showing 08:00–18:00 office time with busy blocks. A display range only, not a booking rule.
