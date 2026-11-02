@@ -7,6 +7,7 @@ Schema is owned by Flyway (`backend/src/main/resources/db/migration/`); Hibernat
 |---|---|---|
 | V1 | `V1__create_schema.sql` | Tables `users`, `rooms`, `room_equipment`, `bookings` |
 | V2 | `V2__seed_users_and_rooms.sql` | 6 users, 6 rooms and their equipment |
+| V3 | `V3__room_name_case_insensitive_and_capacity_range.sql` | `rooms.name_key` (unique, case-insensitive name), capacity check 1–100 (BR-9) |
 
 Bookings are not seeded by Flyway: `SampleBookingSeeder` adds sample bookings for today at startup (see runbook.md).
 
@@ -24,9 +25,10 @@ Bookings are not seeded by Flyway: `SampleBookingSeeder` adds sample bookings fo
 | Column | Type | Constraints | Notes |
 |---|---|---|---|
 | `id` | BIGINT | PK, identity | |
-| `name` | VARCHAR(50) | not null, unique | |
-| `capacity` | INT | not null, `> 0` | People |
-| `active` | BOOLEAN | not null, default true | Inactive rooms are hidden (BR-1) |
+| `name` | VARCHAR(50) | not null, unique | Trimmed, 1–50 characters (BR-9) |
+| `capacity` | INT | not null, `> 0`, `BETWEEN 1 AND 100` (`rooms_capacity_range`) | People |
+| `active` | BOOLEAN | not null, default true | Inactive rooms ("out of service") are hidden (BR-1); set by the admin endpoints (RMB-4) |
+| `name_key` | VARCHAR(50) | generated `LOWER(name)`, unique index `rooms_name_key_idx` | Not mapped in the entity; makes names unique ignoring letter case (BR-9) |
 
 ### `room_equipment` — `@ElementCollection` `Room.equipment` (`Set<Equipment>`)
 | Column | Type | Constraints | Notes |
@@ -51,6 +53,7 @@ Index: `bookings_room_start_idx (room_id, start_at)`.
 - All instants are UTC; no local date-time columns.
 - Booking start and end are on 15-minute steps (BR-2). Not enforced by the database.
 - The office day of a booking is derived, never stored (BR-4).
+- Taking a room out of service deletes its bookings with `start_at` after now (BR-11); there is no cancelled state.
 
 ## Seed data (V2)
 | id | User | Email | Role |
@@ -71,4 +74,4 @@ Index: `bookings_room_start_idx (room_id, start_at)`.
 | 5 | Sa Pa | 2 | — |
 | 6 | Phu Quoc | 20 | TV, WHITEBOARD, VIDEO_CONFERENCE |
 
-All rooms are active.
+All rooms are active in the seed; admins add rooms and change their status on the Manage rooms screen (RMB-4).

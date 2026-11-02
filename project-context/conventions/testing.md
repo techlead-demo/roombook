@@ -26,10 +26,12 @@ What goes where:
 - Pure functions: plain Vitest `describe`/`it`/`expect`, with fixed ISO strings and the zone `'Asia/Ho_Chi_Minh'`.
 - Components: `mount(Component, { props })` from `@vue/test-utils`; assert rendered text and attributes, not internals.
 - Components that use a store: `setActivePinia(createPinia())` in `beforeEach`; mock API modules with `vi.mock('@/api/rooms')`.
+- Pages that use the router or the acting user: `testRouter()`, `actAs(userId)` and `seedAdminRooms()` from `src/testing/fixtures.ts`.
 
 ## End to end
 - `playwright.config.ts` starts the API with profile `e2e` (fresh in-memory database: seed users and rooms, plus today's sample bookings) and the Vite dev server, on `API_PORT`/`WEB_PORT`. Outside CI, servers already running on those ports are reused.
 - Tests run one at a time (`workers: 1`) against one database. Each test creates the data it needs through the UI or API, uses unique titles, and does not depend on other tests or on data created by them.
+- Tests never change the seed rooms (rename, take out of service): they create their own rooms with unique names (`POST /api/admin/rooms` with `X-User-Id: 1`). So the room list may hold more than the 6 seed rooms; do not assert an exact room count.
 - Locate by role, label and text (`getByRole('heading', { name: 'Rooms' })`, `getByLabel('Acting as')`); `getByTestId` only where the app defines a `data-testid`.
 - Times on screen are office time; a test that books uses future 15-minute-aligned times.
 - Browsers: `npx playwright install chromium` once per machine.

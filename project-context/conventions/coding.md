@@ -58,7 +58,8 @@ throw new ErrorResponseException(HttpStatus.CONFLICT, problem, null);
 - Single-file components with `<script setup lang="ts">`, then `<template>`, then `<style scoped>`.
 - Import with the `@/` alias (`@/api/rooms`), not long relative paths.
 - Two-space indentation, single quotes, no semicolons (match existing files).
-- When a second page is needed, add `vue-router@4` with routes in `src/router/index.ts`, render `<RouterView />` in `App.vue`, and add the header navigation shown in the mockups.
+- Routing: `vue-router@4`, routes with a `name` in `src/router/index.ts`, `<RouterView />` in `App.vue`. Navigate by route name (`{ name: 'manage-rooms' }`); add header links as the mockups show them.
+- Shared visual classes (`.card`, `.btn*`, `.alert*`) live in `styles/base.css`; page-specific styles stay scoped.
 
 ### TypeScript
 - `strict` mode; no `any` (use `unknown` and narrow). `vue-tsc --noEmit` must pass (`make lint`).

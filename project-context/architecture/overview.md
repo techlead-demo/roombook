@@ -24,9 +24,9 @@ Packages by feature; each feature holds its controller, service, repository, ent
 | Package | Contents |
 |---|---|
 | `common/` | `ApiExceptionHandler` (ProblemDetail), `OfficeProperties` (`roombook.office.*`), `TimeConfig` (`Clock` bean) |
-| `user/` | `User` entity, `Role`, `UserRepository`, `UserService`, `UserController` (`GET /api/users`), `UserResponse` |
-| `room/` | `Room` entity, `Equipment`, `RoomRepository`, `RoomService`, `RoomController` (`GET /api/rooms`), `RoomResponse` |
-| `booking/` | `Booking` entity, `BookingRepository`, `SampleBookingSeeder` (startup sample data) |
+| `user/` | `User` entity, `Role`, `UserRepository`, `UserService` (also `requireAdmin`: 401/403 for admin-only endpoints), `UserController` (`GET /api/users`), `UserResponse` |
+| `room/` | `Room` entity, `Equipment`, `RoomRepository`, `RoomService`, `RoomController` (`GET /api/rooms`), `RoomResponse`; admin: `AdminRoomController` (`/api/admin/rooms`), `RoomAdminService`, `RoomRequest`, `AdminRoomResponse`, `DeactivateRoomResponse` |
+| `booking/` | `Booking` entity, `BookingRepository`, `RoomBookingCount` (query projection), `SampleBookingSeeder` (startup sample data) |
 | `availability/` | `AvailabilityController` (`GET /api/rooms/availability`), `AvailabilityService`, `AvailabilityResponse` |
 
 Layering: controllers only bind and validate input and call one service method; services hold the logic and the `@Transactional` boundary and return DTO records; entities never leave the service layer; repositories are Spring Data interfaces.
@@ -42,14 +42,16 @@ The JVM runs in UTC (`-Duser.timezone=UTC` for `spring-boot:run` and tests; `Tim
 ## Frontend layout (`frontend/src/`)
 | Path | Contents |
 |---|---|
-| `main.ts` | Creates the app, installs Pinia, imports `@design/tokens.css` (= `project-context/design/tokens.css`) and `styles/base.css` |
-| `App.vue` | Header (brand, `UserPicker`) and the page (`RoomListPage`) |
-| `pages/` | One component per screen; loads its own data. Today: `RoomListPage.vue` |
+| `main.ts` | Creates the app, installs Pinia and the router, imports `@design/tokens.css` (= `project-context/design/tokens.css`) and `styles/base.css` |
+| `App.vue` | Header (brand link to `/`, "Manage rooms" link for admins, `UserPicker`) and `<RouterView />` |
+| `router/index.ts` | `vue-router@4` routes (HTML5 history): `/` `rooms` → `RoomListPage`, `/admin/rooms` `manage-rooms` → `ManageRoomsPage`, `/admin/rooms/new` `add-room` and `/admin/rooms/:id/edit` `edit-room` → `RoomFormPage` |
+| `pages/` | One component per screen; loads its own data: `RoomListPage.vue`, `ManageRoomsPage.vue`, `RoomFormPage.vue` |
 | `components/` | Reusable components: `UserPicker.vue`, `RoomTimeline.vue` |
-| `api/` | `http.ts` (fetch wrapper, `ApiError`, `X-User-Id`), one module per resource (`rooms.ts`, `users.ts`), `types.ts` (API types, snake_case) |
-| `stores/` | Pinia setup stores for state shared across pages. Today: `user.ts` (users, acting user) |
-| `utils/` | Pure helpers: `time.ts` (UTC ↔ office time), `equipment.ts` (labels) |
+| `api/` | `http.ts` (fetch wrapper, `ApiError`, `X-User-Id`), one module per resource (`rooms.ts`, `users.ts`, `adminRooms.ts`), `types.ts` (API types, snake_case) |
+| `stores/` | Pinia setup stores for state shared across pages: `user.ts` (users, acting user, `isAdmin`), `notice.ts` (one-time success message handed to the next page) |
+| `utils/` | Pure helpers: `time.ts` (UTC ↔ office time), `equipment.ts` (labels), `roomMessages.ts` (room admin texts, `problemDetailOr`) |
+| `testing/` | Test-only helpers for Vitest (`fixtures.ts`: users, seed rooms, test router) |
 | `config.ts` | `OFFICE_TIME_ZONE` (mirrors the backend property), timeline display hours |
-| `styles/base.css` | Global element styles using the tokens |
+| `styles/base.css` | Global element styles and shared classes (`.card`, `.btn`, `.btn-primary`, `.btn-danger`, `.alert`, `.alert-danger`, `.alert-success`) using the tokens |
 
-There is a single page and no router yet.
+Admin-only screens show "Only admins can manage rooms." when the acting user is not an admin; the API enforces the same rule (BR-10).
