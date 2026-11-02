@@ -10,3 +10,6 @@ Rules that hold in the product today. New rules get the next free number; a rule
 - **BR-6** A user has exactly one role: `EMPLOYEE` or `ADMIN`.
 - **BR-7** A booking cannot start in the past: its start must be at or after the current time when it is made.
 - **BR-8** A booking is made by the acting user for one active room and has a title of 1–100 characters; leading and trailing spaces are removed before the title is checked and stored.
+- **BR-9** A room has a name of 1–50 characters, unique ignoring letter case; leading and trailing spaces are removed before the name is checked and stored. Its capacity is a whole number from 1 to 100. Its equipment is any subset of TV, Whiteboard, Video conference (possibly none).
+- **BR-10** Only admins can add rooms, change them, take them out of service and put them back into service.
+- **BR-11** Taking a room out of service takes effect immediately and lasts until an admin puts it back into service. It cancels (deletes) every booking of the room that starts after that moment; bookings that started at or before it are kept. Putting the room back into service does not restore cancelled bookings.

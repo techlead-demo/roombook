@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoomBook wireframe — Add / edit room (RMB-4)</title>
+  <link rel="stylesheet" href="../../../project-context/design/tokens.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-family); font-size: var(--font-size-md); line-height: 1.5; }
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: var(--font-size-xl); }
+    h2 { font-size: var(--font-size-lg); }
+    p { margin: 0; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) var(--space-5); background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+    .brand { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: var(--color-primary); }
+    .nav { display: flex; gap: var(--space-4); margin-right: auto; margin-left: var(--space-5); }
+    .nav a { color: var(--color-text-muted); text-decoration: none; }
+    .nav a[aria-current="page"] { color: var(--color-text); font-weight: var(--font-weight-semibold); }
+    .user-picker { display: flex; align-items: center; gap: var(--space-2); }
+    .user-picker span { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .app-main { max-width: 960px; margin: 0 auto; padding: var(--space-5); }
+    .page-header { margin-bottom: var(--space-5); }
+    .subtitle, .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); padding: var(--space-4); }
+    .stack { display: grid; gap: var(--space-3); }
+    .btn { display: inline-flex; align-items: center; height: var(--control-height); padding: 0 var(--space-4); border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-contrast); }
+    .field { display: grid; gap: var(--space-1); align-content: start; }
+    .field label, .field legend { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+    input, select { height: var(--control-height); padding: 0 var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); font: inherit; }
+    .field input, .field select { width: 100%; min-width: 0; }
+    .field.invalid input, .field.invalid select { border-color: var(--color-danger); }
+    .field-error { color: var(--color-danger); font-size: var(--font-size-sm); }
+    .hint { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .alert { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid; }
+    .alert-danger { color: var(--color-danger); background: var(--color-danger-bg); border-color: var(--color-danger-border); }
+    /* Wireframe-only annotation of the state shown below it; not part of the UI */
+    .state { margin: var(--space-6) 0 var(--space-3); padding: var(--space-1) var(--space-3); border: 1px dashed var(--color-text-muted); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-muted); font-family: monospace; }
+
+    .room-form { max-width: 480px; }
+    fieldset.field { border: 0; margin: 0; padding: 0; }
+    .checks { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+    .checks label { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: normal; font-size: var(--font-size-md); }
+    .checks input { height: auto; width: auto; }
+    .actions { display: flex; gap: var(--space-2); }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <span class="brand">RoomBook</span>
+    <nav class="nav"><a href="manage-rooms.html" aria-current="page">Manage rooms</a></nav>
+    <label class="user-picker"><span>Acting as</span>
+      <select><option selected>An Nguyen (admin)</option><option>Binh Tran</option><option>Chi Le</option></select>
+    </label>
+  </header>
+  <main class="app-main">
+    <p class="state">State: add room (empty form)</p>
+    <div class="page-header"><h1>Add room</h1></div>
+    <form class="card stack room-form">
+      <div class="field"><label>Name</label><input type="text" maxlength="50" value=""></div>
+      <div class="field"><label>Capacity</label><input type="number" min="1" max="100" step="1" value=""><p class="hint">People, from 1 to 100.</p></div>
+      <fieldset class="field"><legend>Equipment</legend>
+        <div class="checks"><label><input type="checkbox"> TV</label><label><input type="checkbox"> Whiteboard</label><label><input type="checkbox"> Video conference</label></div>
+      </fieldset>
+      <div class="actions"><button class="btn btn-primary" type="button">Save room</button><a class="btn" href="manage-rooms.html">Cancel</a></div>
+    </form>
+
+    <p class="state">State: edit room (prefilled with the room's current values)</p>
+    <div class="page-header"><h1>Edit room</h1></div>
+    <form class="card stack room-form">
+      <div class="field"><label>Name</label><input type="text" maxlength="50" value="Hue"></div>
+      <div class="field"><label>Capacity</label><input type="number" min="1" max="100" step="1" value="6"><p class="hint">People, from 1 to 100.</p></div>
+      <fieldset class="field"><legend>Equipment</legend>
+        <div class="checks"><label><input type="checkbox" checked> TV</label><label><input type="checkbox" checked> Whiteboard</label><label><input type="checkbox"> Video conference</label></div>
+      </fieldset>
+      <div class="actions"><button class="btn btn-primary" type="button">Save room</button><a class="btn" href="manage-rooms.html">Cancel</a></div>
+    </form>
+
+    <p class="state">State: validation errors (under the field; inputs kept). "Enter a name." is shown for an empty name instead of the duplicate message.</p>
+    <div class="page-header"><h1>Add room</h1></div>
+    <form class="card stack room-form">
+      <div class="field invalid"><label>Name</label><input type="text" maxlength="50" value="ha long"><p class="field-error">A room with this name already exists.</p></div>
+      <div class="field invalid"><label>Capacity</label><input type="number" min="1" max="100" step="1" value="101"><p class="field-error">Enter a whole number from 1 to 100.</p></div>
+      <fieldset class="field"><legend>Equipment</legend>
+        <div class="checks"><label><input type="checkbox" checked> TV</label><label><input type="checkbox"> Whiteboard</label><label><input type="checkbox"> Video conference</label></div>
+      </fieldset>
+      <div class="actions"><button class="btn btn-primary" type="button">Save room</button><a class="btn" href="manage-rooms.html">Cancel</a></div>
+    </form>
+
+    <p class="state">State: server error (above the form; ProblemDetail detail when there is one; inputs kept)</p>
+    <div class="page-header"><h1>Edit room</h1></div>
+    <form class="card stack room-form">
+      <div class="alert alert-danger" role="alert">Could not save the room. Try again later.</div>
+      <div class="field"><label>Name</label><input type="text" maxlength="50" value="Hue Garden"></div>
+      <div class="field"><label>Capacity</label><input type="number" min="1" max="100" step="1" value="8"><p class="hint">People, from 1 to 100.</p></div>
+      <fieldset class="field"><legend>Equipment</legend>
+        <div class="checks"><label><input type="checkbox"> TV</label><label><input type="checkbox" checked> Whiteboard</label><label><input type="checkbox" checked> Video conference</label></div>
+      </fieldset>
+      <div class="actions"><button class="btn btn-primary" type="button">Save room</button><a class="btn" href="manage-rooms.html">Cancel</a></div>
+    </form>
+
+    <p class="state">State: no access — acting user is an employee</p>
+    <div class="alert alert-danger" role="alert">Only admins can manage rooms.</div>
+  </main>
+</body>
+</html>
