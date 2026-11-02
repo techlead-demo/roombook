@@ -23,10 +23,10 @@ Packages by feature; each feature holds its controller, service, repository, ent
 
 | Package | Contents |
 |---|---|
-| `common/` | `ApiExceptionHandler` (ProblemDetail), `OfficeProperties` (`roombook.office.*`), `TimeConfig` (`Clock` bean) |
+| `common/` | `ApiExceptionHandler` (ProblemDetail), `FieldValidationException` (service-side field errors as `400` + `errors`), `OfficeProperties` (`roombook.office.*`), `TimeConfig` (`Clock` bean) |
 | `user/` | `User` entity, `Role`, `UserRepository`, `UserService`, `UserController` (`GET /api/users`), `UserResponse` |
 | `room/` | `Room` entity, `Equipment`, `RoomRepository`, `RoomService`, `RoomController` (`GET /api/rooms`), `RoomResponse` |
-| `booking/` | `Booking` entity, `BookingRepository`, `SampleBookingSeeder` (startup sample data) |
+| `booking/` | `Booking` entity, `BookingRepository`, `BookingService`, `BookingController` (`POST /api/bookings`), `BookingRequest`, `BookingResponse`, `SampleBookingSeeder` (startup sample data) |
 | `availability/` | `AvailabilityController` (`GET /api/rooms/availability`), `AvailabilityService`, `AvailabilityResponse` |
 
 Layering: controllers only bind and validate input and call one service method; services hold the logic and the `@Transactional` boundary and return DTO records; entities never leave the service layer; repositories are Spring Data interfaces.
@@ -42,14 +42,15 @@ The JVM runs in UTC (`-Duser.timezone=UTC` for `spring-boot:run` and tests; `Tim
 ## Frontend layout (`frontend/src/`)
 | Path | Contents |
 |---|---|
-| `main.ts` | Creates the app, installs Pinia, imports `@design/tokens.css` (= `project-context/design/tokens.css`) and `styles/base.css` |
-| `App.vue` | Header (brand, `UserPicker`) and the page (`RoomListPage`) |
-| `pages/` | One component per screen; loads its own data. Today: `RoomListPage.vue` |
+| `main.ts` | Creates the app, installs Pinia and the router, imports `@design/tokens.css` (= `project-context/design/tokens.css`) and `styles/base.css` |
+| `router/index.ts` | `vue-router@4` routes (`createAppRouter`, HTML5 history): `/` → `RoomListPage` (`rooms`), `/book/:roomId` → `BookingFormPage` (`book`, `roomId` as a number prop); other paths redirect to `/` |
+| `App.vue` | Header (brand, `UserPicker`) and `<RouterView />`; turns the pages' events (`book`, `booked`, `cancel`) into navigation and keeps the success message, which is cleared when the room list is left |
+| `pages/` | One component per screen; loads its own data. Today: `RoomListPage.vue` (with "Book" buttons and the success message), `BookingFormPage.vue` |
 | `components/` | Reusable components: `UserPicker.vue`, `RoomTimeline.vue` |
-| `api/` | `http.ts` (fetch wrapper, `ApiError`, `X-User-Id`), one module per resource (`rooms.ts`, `users.ts`), `types.ts` (API types, snake_case) |
+| `api/` | `http.ts` (fetch wrapper, `ApiError`, `X-User-Id`), one module per resource (`rooms.ts`, `users.ts`, `bookings.ts`), `types.ts` (API types, snake_case) |
 | `stores/` | Pinia setup stores for state shared across pages. Today: `user.ts` (users, acting user) |
-| `utils/` | Pure helpers: `time.ts` (UTC ↔ office time), `equipment.ts` (labels) |
+| `utils/` | Pure helpers: `time.ts` (UTC ↔ office time), `equipment.ts` (labels), `bookingForm.ts` (booking form validation) |
 | `config.ts` | `OFFICE_TIME_ZONE` (mirrors the backend property), timeline display hours |
-| `styles/base.css` | Global element styles using the tokens |
+| `styles/base.css` | Global element styles and the shared classes of the mockups (`.card`, `.muted`, `.btn`, `.btn-primary`, `.alert-*`) using the tokens |
 
-There is a single page and no router yet.
+Pages do not use the router themselves: they emit events and `App.vue` navigates, so page tests need no router. The header navigation of the mockups comes with RMB-3.

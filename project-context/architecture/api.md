@@ -4,14 +4,14 @@
 - Base path `/api`. JSON only.
 - Property names are **snake_case**. Enums are sent as their names (`"VIDEO_CONFERENCE"`).
 - Date-times are ISO 8601 **UTC** instants with `Z` (`"2026-11-02T02:00:00Z"`). Calendar dates are `YYYY-MM-DD` and mean a day in the office time zone (BR-4).
-- Request header `X-User-Id: <user id>` identifies the acting user. The web app sends it on every request; no endpoint uses it yet. An endpoint that acts on behalf of a user reads it with `@RequestHeader("X-User-Id") Long userId` and answers `401` ProblemDetail ("Unknown user") when it is missing or not a known user id.
+- Request header `X-User-Id: <user id>` identifies the acting user. The web app sends it on every request; `POST /api/bookings` uses it. An endpoint that acts on behalf of a user reads it with `@RequestHeader(name = "X-User-Id", required = false) Long userId` and answers `401` ProblemDetail ("Unknown user") when it is missing or not a known user id.
 - Errors: RFC 7807 `ProblemDetail`, content type `application/problem+json`:
 
 ```json
 {"detail":"Invalid value '2026-13-45' for parameter 'date'.","instance":"/api/rooms/availability","status":400,"title":"Bad Request"}
 ```
 
-  `type` is omitted when it is `about:blank`; extra properties may be added with `ProblemDetail.setProperty`. Request-body validation errors (`@Valid`) are `400` with an extra `errors` array: `"errors":[{"field":"title","message":"must not be blank"}]`. Unknown paths return `404` ProblemDetail; unexpected failures `500` with detail "An unexpected error occurred.".
+  `type` is omitted when it is `about:blank`; extra properties may be added with `ProblemDetail.setProperty`. Request-body validation errors are `400` with detail "Request validation failed." and an extra `errors` array: `"errors":[{"field":"start_at","message":"must not be null"}]`. `field` is the JSON (snake_case) property name. Both `@Valid` failures and rules checked in a service (throw `common.FieldValidationException`) use this shape. Unknown paths return `404` ProblemDetail; unexpected failures `500` with detail "An unexpected error occurred.".
 
 ## Endpoints
 
@@ -66,3 +66,30 @@ Errors:
 |---|---|---|
 | `date` missing | 400 | `Required parameter 'date' is not present.` |
 | `date` not a valid `YYYY-MM-DD` date | 400 | `Invalid value '<value>' for parameter 'date'.` |
+
+### `POST /api/bookings`
+Books an active room for the acting user (`X-User-Id`). BR-2, BR-3, BR-7, BR-8. Overlapping bookings are still accepted (RMB-2).
+
+Request (`title` is stripped of leading and trailing spaces before it is checked and stored):
+```json
+{"room_id":1,"title":"Sprint planning","start_at":"2026-11-02T04:00:00Z","end_at":"2026-11-02T05:00:00Z"}
+```
+
+Response `201 Created` (`created_at` from the injected `Clock`):
+```json
+{"id":8,"room_id":1,"user_id":2,"title":"Sprint planning","start_at":"2026-11-02T04:00:00Z","end_at":"2026-11-02T05:00:00Z","created_at":"2026-11-02T01:07:00Z"}
+```
+
+Errors (nothing is stored):
+| Case | Status | `detail` / `errors` |
+|---|---|---|
+| `X-User-Id` missing or not a known user | 401 | `Unknown user` |
+| `room_id` unknown or of an inactive room | 404 | `Room <room_id> not found.` |
+| `room_id`, `start_at` or `end_at` missing | 400 | that field: `must not be null` |
+| `title` missing, empty or only spaces | 400 | `title`: `must not be blank` |
+| `title` longer than 100 characters after trimming | 400 | `title`: `must be at most 100 characters` |
+| `start_at` / `end_at` not on a 15-minute step (office time, zero seconds) | 400 | that field: `must be on a 15-minute step` |
+| `end_at` equal to or before `start_at` | 400 | `end_at`: `must be after start_at` |
+| `start_at` before now (a start equal to now is accepted) | 400 | `start_at`: `must not be in the past` |
+
+Checks run in this order: the user (`401`), then Bean Validation of the body (missing fields, title; run in `BookingService`, not with `@Valid`, so an unknown caller gets no field feedback), then the room (`404`), then the time rules. A body that is not valid JSON is still answered with `400` before the user check.

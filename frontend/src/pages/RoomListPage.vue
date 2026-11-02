@@ -8,6 +8,15 @@ import { OFFICE_TIME_ZONE } from '@/config'
 import { EQUIPMENT_LABELS } from '@/utils/equipment'
 import { formatCalendarDate, toOfficeDate } from '@/utils/time'
 
+defineProps<{
+  /** Shown above the list after a booking was made. */
+  successMessage?: string | null
+}>()
+
+const emit = defineEmits<{
+  book: [roomId: number]
+}>()
+
 const today = toOfficeDate(new Date(), OFFICE_TIME_ZONE)
 
 const rooms = ref<Room[]>([])
@@ -39,6 +48,8 @@ onMounted(async () => {
       <p class="subtitle">Today's availability · {{ formatCalendarDate(today) }} · times in office time ({{ OFFICE_TIME_ZONE }})</p>
     </div>
 
+    <p v-if="successMessage" class="alert alert-success success" role="status">{{ successMessage }}</p>
+
     <p v-if="loading" class="status">Loading rooms…</p>
     <p v-else-if="error" class="status error" role="alert">{{ error }}</p>
     <p v-else-if="rooms.length === 0" class="status">No rooms yet.</p>
@@ -58,6 +69,7 @@ onMounted(async () => {
           :date="today"
           :time-zone="availability?.time_zone ?? OFFICE_TIME_ZONE"
         />
+        <button class="btn" type="button" @click="emit('book', room.id)">Book</button>
       </li>
     </ul>
   </section>
@@ -77,6 +89,10 @@ h1 {
   margin: var(--space-1) 0 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+.success {
+  margin-bottom: var(--space-3);
 }
 
 .status {
@@ -102,7 +118,7 @@ h1 {
 
 .room-card {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px 1fr auto;
   gap: var(--space-5);
   align-items: center;
   padding: var(--space-4);

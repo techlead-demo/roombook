@@ -1,6 +1,25 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { RouterView, useRouter } from 'vue-router'
 import UserPicker from '@/components/UserPicker.vue'
-import RoomListPage from '@/pages/RoomListPage.vue'
+
+const router = useRouter()
+
+/** Shown on the room list after a booking; it lives only as long as the room list is shown. */
+const successMessage = ref<string | null>(null)
+
+router.afterEach((to) => {
+  if (to.name !== 'rooms') successMessage.value = null
+})
+
+function openForm(roomId: number): void {
+  router.push({ name: 'book', params: { roomId } })
+}
+
+function showRooms(message: string | null): void {
+  successMessage.value = message
+  router.push({ name: 'rooms' })
+}
 </script>
 
 <template>
@@ -9,7 +28,16 @@ import RoomListPage from '@/pages/RoomListPage.vue'
     <UserPicker />
   </header>
   <main class="app-main">
-    <RoomListPage />
+    <RouterView v-slot="{ Component, route }">
+      <component
+        :is="Component"
+        v-if="route.name === 'book'"
+        :key="route.fullPath"
+        @booked="(message: string) => showRooms(message)"
+        @cancel="showRooms(null)"
+      />
+      <component :is="Component" v-else-if="Component" :success-message="successMessage" @book="openForm" />
+    </RouterView>
   </main>
 </template>
 
