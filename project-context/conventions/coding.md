@@ -21,7 +21,7 @@
 - Lists are returned as plain JSON arrays; collections are never `null` (use `List.of()`).
 
 ### Validation
-- Bean Validation annotations on request records (`@NotBlank`, `@Size(max = 100)`, `@NotNull`, `@Positive`), `@Valid @RequestBody` in the controller. Field errors become `400` with an `errors` array (see api.md).
+- Bean Validation annotations on request records (`@NotBlank`, `@Size(max = 100)`, `@NotNull`, `@Positive`), `@Valid @RequestBody` in the controller. Field errors become `400` with an `errors` array (see api.md). Exception: an endpoint that acts for a user (`X-User-Id`) takes a plain `@RequestBody`, checks the user first and then validates the body with the injected `jakarta.validation.Validator` (`FieldValidationException.of(violations)`), so an unknown caller gets `401`, not field errors (e.g. `BookingService.create`).
 - Query parameters: typed (`LocalDate`, `Long`, enums) with `@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)` for dates. Wrong types become `400` automatically.
 - Business rules that need data (overlaps, limits) are checked in the service.
 
@@ -58,7 +58,7 @@ throw new ErrorResponseException(HttpStatus.CONFLICT, problem, null);
 - Single-file components with `<script setup lang="ts">`, then `<template>`, then `<style scoped>`.
 - Import with the `@/` alias (`@/api/rooms`), not long relative paths.
 - Two-space indentation, single quotes, no semicolons (match existing files).
-- When the header navigation shown in the mockups is added (RMB-3), add `vue-router@4` with routes in `src/router/index.ts` and render `<RouterView />` in `App.vue`. Until then `App.vue` switches between the room list and the booking form with a `view` ref.
+- Pages are routed with `vue-router@4`: routes in `src/router/index.ts`, `<RouterView />` in `App.vue`. Pages emit events (`book`, `booked`, `cancel`) and `App.vue` navigates; route params reach the page as typed props (`props: (route) => ({ ... })`). The header navigation shown in the mockups comes with RMB-3.
 
 ### TypeScript
 - `strict` mode; no `any` (use `unknown` and narrow). `vue-tsc --noEmit` must pass (`make lint`).

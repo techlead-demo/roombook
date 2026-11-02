@@ -1,13 +1,25 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { RouterView, useRouter } from 'vue-router'
 import UserPicker from '@/components/UserPicker.vue'
-import BookingFormPage from '@/pages/BookingFormPage.vue'
-import RoomListPage from '@/pages/RoomListPage.vue'
 
-/** The shown screen. The success message lives only as long as the room list is shown. */
-type View = { page: 'rooms'; successMessage: string | null } | { page: 'book'; roomId: number }
+const router = useRouter()
 
-const view = ref<View>({ page: 'rooms', successMessage: null })
+/** Shown on the room list after a booking; it lives only as long as the room list is shown. */
+const successMessage = ref<string | null>(null)
+
+router.afterEach((to) => {
+  if (to.name !== 'rooms') successMessage.value = null
+})
+
+function openForm(roomId: number): void {
+  router.push({ name: 'book', params: { roomId } })
+}
+
+function showRooms(message: string | null): void {
+  successMessage.value = message
+  router.push({ name: 'rooms' })
+}
 </script>
 
 <template>
@@ -16,17 +28,16 @@ const view = ref<View>({ page: 'rooms', successMessage: null })
     <UserPicker />
   </header>
   <main class="app-main">
-    <BookingFormPage
-      v-if="view.page === 'book'"
-      :room-id="view.roomId"
-      @booked="(message) => (view = { page: 'rooms', successMessage: message })"
-      @cancel="view = { page: 'rooms', successMessage: null }"
-    />
-    <RoomListPage
-      v-else
-      :success-message="view.successMessage"
-      @book="(roomId) => (view = { page: 'book', roomId })"
-    />
+    <RouterView v-slot="{ Component, route }">
+      <component
+        :is="Component"
+        v-if="route.name === 'book'"
+        :key="route.fullPath"
+        @booked="(message: string) => showRooms(message)"
+        @cancel="showRooms(null)"
+      />
+      <component :is="Component" v-else-if="Component" :success-message="successMessage" @book="openForm" />
+    </RouterView>
   </main>
 </template>
 

@@ -42,8 +42,9 @@ The JVM runs in UTC (`-Duser.timezone=UTC` for `spring-boot:run` and tests; `Tim
 ## Frontend layout (`frontend/src/`)
 | Path | Contents |
 |---|---|
-| `main.ts` | Creates the app, installs Pinia, imports `@design/tokens.css` (= `project-context/design/tokens.css`) and `styles/base.css` |
-| `App.vue` | Header (brand, `UserPicker`) and the current page: `RoomListPage` or `BookingFormPage`, switched by a `view` ref (no router yet) |
+| `main.ts` | Creates the app, installs Pinia and the router, imports `@design/tokens.css` (= `project-context/design/tokens.css`) and `styles/base.css` |
+| `router/index.ts` | `vue-router@4` routes (`createAppRouter`, HTML5 history): `/` → `RoomListPage` (`rooms`), `/book/:roomId` → `BookingFormPage` (`book`, `roomId` as a number prop); other paths redirect to `/` |
+| `App.vue` | Header (brand, `UserPicker`) and `<RouterView />`; turns the pages' events (`book`, `booked`, `cancel`) into navigation and keeps the success message, which is cleared when the room list is left |
 | `pages/` | One component per screen; loads its own data. Today: `RoomListPage.vue` (with "Book" buttons and the success message), `BookingFormPage.vue` |
 | `components/` | Reusable components: `UserPicker.vue`, `RoomTimeline.vue` |
 | `api/` | `http.ts` (fetch wrapper, `ApiError`, `X-User-Id`), one module per resource (`rooms.ts`, `users.ts`, `bookings.ts`), `types.ts` (API types, snake_case) |
@@ -52,4 +53,4 @@ The JVM runs in UTC (`-Duser.timezone=UTC` for `spring-boot:run` and tests; `Tim
 | `config.ts` | `OFFICE_TIME_ZONE` (mirrors the backend property), timeline display hours |
 | `styles/base.css` | Global element styles and the shared classes of the mockups (`.card`, `.muted`, `.btn`, `.btn-primary`, `.alert-*`) using the tokens |
 
-There is no router yet: `App.vue` shows the room list or the booking form. `vue-router@4` comes with the header navigation (see conventions/coding.md).
+Pages do not use the router themselves: they emit events and `App.vue` navigates, so page tests need no router. The header navigation of the mockups comes with RMB-3.
