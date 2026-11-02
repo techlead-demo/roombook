@@ -1,7 +1,7 @@
 ---
 issue: RMB-4
 spec_version: 1
-revision: 0
+revision: 2
 ---
 
 # Implementation plan — RMB-4
@@ -66,5 +66,19 @@ Frontend: the second and third screens need routing, so `vue-router@4` is added 
 ## Risks and notes
 - RMB-1 (booking) is still in Code Review and not on `develop`: there is no booking form and no `POST /api/bookings` on this branch. The parts of AC-7, AC-10, AC-21 and AC-22 that mention the booking form's Room select or `POST /api/bookings` cannot be tested here. RMB-1's booking form is expected to fill its Room select from `GET /api/rooms` and to reject inactive rooms with `404`; both are covered for `GET /api/rooms` by the tests above. They should be re-checked once both stories are merged.
 - AC-28 leaves the response shape of deactivate open ("the room … and `cancelled_bookings`"); it is `{"room": {...}, "cancelled_bookings": n}` and documented in api.md.
-- The admin check runs in the service, after request-body validation: an employee sending an invalid body gets `400`, not `403`. With a valid body the answer is `403` (AC-3).
+- ~~The admin check runs after request-body validation~~ (changed in Revision 2: the body is validated after the admin check).
 - e2e tests create their own rooms (unique names) and never change the seed rooms, so they stay independent; the room-list e2e test checks the seed rooms instead of an exact count.
+
+## Revision 2
+`develop` (with RMB-1, booking) was merged in first (`RMB-4: merge develop`): router (`createAppRouter`, `/book/:roomId`, catch-all), `App.vue` (booking events and success message for the booking pages only; admin pages render plainly), `base.css`, `App.spec.ts` (both header and routing tests) and the context files combine both sides.
+
+| Feedback item | Resolution |
+|---|---|
+| [major] `business/overview.md` still says there is no admin screen | Declined here: `project-context/business/**` belongs to the BA and the Engineer role may not change it. Needs a BA update (Manage rooms flow; remove "Any administration screen" and "no extra screens"; the 6 rooms are the seed rooms). |
+| [minor] AC-3: invalid body from a non-admin gives 400 | Fixed: no `@Valid` on the admin controller; `RoomAdminService` validates the body with the `Validator` after `requireAdmin` (same pattern as RMB-1's `BookingService`), via `FieldValidationException`. Test `ac3_checksAccessBeforeTheBodySoNonAdminsGetNoFieldErrors`. |
+| [minor] AC-27: concurrent saves of the same name give 500 | Fixed: create/update use `saveAndFlush`; a `DataIntegrityViolationException` from `rooms_name_key_idx` is answered with the same `409`. `RoomNameRaceTest` makes the name pre-check miss so the real unique index rejects the save. |
+| [minor] AC-2: no test for switching the user while the room form is open | Fixed: `RoomFormPage.spec.ts` › "AC-2: … switches to an employee while the form is open". |
+| [nit] RoomFormPage ignores a change of the `id` prop | Fixed: the watch also tracks `props.id`, resets the fields and loads the new room; a stale load is ignored. Test "shows the room of the new id, or an empty Add form, …". |
+| [minor] AC-23: no test that the confirm button is disabled during deactivation | Fixed: `ManageRoomsPage.spec.ts` › "AC-23: disables the confirmation's 'Take out of service' button while the request runs". |
+
+Also, now that RMB-1 is merged: the booking parts of AC-7, AC-21 and AC-22 are tested (`POST /api/bookings` 404 / 201 in `ac21_…` / `ac28_ac22_…`; the booking form's Room select in `e2e/admin-rooms.spec.ts`). The admin e2e tests take their `E2E …` rooms out of service in `afterEach`, because RMB-1's e2e tests expect only the 6 seed rooms to be active. `FieldValidationException.of` drops container nodes from the path (`equipment[0].<list element>` → `equipment[0]`).
