@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoomBook wireframe — Manage rooms (RMB-4)</title>
+  <link rel="stylesheet" href="../../../project-context/design/tokens.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-family); font-size: var(--font-size-md); line-height: 1.5; }
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: var(--font-size-xl); }
+    h2 { font-size: var(--font-size-lg); }
+    p { margin: 0; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) var(--space-5); background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+    .brand { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: var(--color-primary); }
+    .nav { display: flex; gap: var(--space-4); margin-right: auto; margin-left: var(--space-5); }
+    .nav a { color: var(--color-text-muted); text-decoration: none; }
+    .nav a[aria-current="page"] { color: var(--color-text); font-weight: var(--font-weight-semibold); }
+    .user-picker { display: flex; align-items: center; gap: var(--space-2); }
+    .user-picker span { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .app-main { max-width: 960px; margin: 0 auto; padding: var(--space-5); }
+    .page-header { margin-bottom: var(--space-5); }
+    .subtitle, .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+    .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); padding: var(--space-4); }
+    .stack { display: grid; gap: var(--space-3); }
+    .btn { display: inline-flex; align-items: center; height: var(--control-height); padding: 0 var(--space-4); border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-contrast); }
+    .btn-danger { color: var(--color-danger); border-color: var(--color-danger-border); }
+    .alert { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid; }
+    .alert-danger { color: var(--color-danger); background: var(--color-danger-bg); border-color: var(--color-danger-border); }
+    .alert-success { color: var(--color-success); background: var(--color-success-bg); border-color: var(--color-success-border); }
+    .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+    .chip { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-chip-bg); color: var(--color-chip-text); font-size: var(--font-size-xs); }
+    /* Wireframe-only annotation of the state shown below it; not part of the UI */
+    .state { margin: var(--space-6) 0 var(--space-3); padding: var(--space-1) var(--space-3); border: 1px dashed var(--color-text-muted); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-muted); font-family: monospace; }
+
+    .page-header { display: flex; justify-content: space-between; align-items: start; gap: var(--space-4); }
+    .room-list { margin: 0; padding: 0; list-style: none; }
+    .room-row { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-5); align-items: center; }
+    .room-row.out-of-service h2, .room-row.out-of-service .chips { color: var(--color-text-muted); }
+    .status { padding: 0 var(--space-2); border-radius: var(--radius-pill); font-size: var(--font-size-xs); border: 1px solid; }
+    .status-in { color: var(--color-success); background: var(--color-success-bg); border-color: var(--color-success-border); }
+    .status-out { color: var(--color-text-muted); background: var(--color-bg); border-color: var(--color-border); }
+    .actions { display: flex; gap: var(--space-2); }
+    .confirm { grid-column: 1 / -1; display: grid; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <span class="brand">RoomBook</span>
+    <nav class="nav"><a href="manage-rooms.html" aria-current="page">Manage rooms</a></nav>
+    <label class="user-picker"><span>Acting as</span>
+      <select><option selected>An Nguyen (admin)</option><option>Binh Tran</option><option>Chi Le</option></select>
+    </label>
+  </header>
+  <main class="app-main">
+    <div class="page-header">
+      <div>
+        <h1>Manage rooms</h1>
+        <p class="subtitle">All rooms, including rooms out of service.</p>
+      </div>
+      <a class="btn btn-primary" href="room-form.html">Add room</a>
+    </div>
+
+    <p class="state">State: default — all rooms ordered by name; Sa Pa is out of service. "Manage rooms" link is shown in the header only for admins.</p>
+    <ul class="stack room-list">
+      <li class="card room-row">
+        <div><h2>Da Lat</h2><p class="muted">Up to 4 people</p><ul class="chips"><li class="chip">Whiteboard</li></ul></div>
+        <span class="status status-in">In service</span>
+        <div class="actions"><a class="btn" href="room-form.html">Edit</a><button class="btn btn-danger" type="button">Take out of service</button></div>
+      </li>
+      <li class="card room-row">
+        <div><h2>Ha Long</h2><p class="muted">Up to 12 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Whiteboard</li><li class="chip">Video conference</li></ul></div>
+        <span class="status status-in">In service</span>
+        <div class="actions"><a class="btn" href="room-form.html">Edit</a><button class="btn btn-danger" type="button">Take out of service</button></div>
+      </li>
+      <li class="card room-row">
+        <div><h2>Hoi An</h2><p class="muted">Up to 8 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Video conference</li></ul></div>
+        <span class="status status-in">In service</span>
+        <div class="actions"><a class="btn" href="room-form.html">Edit</a><button class="btn btn-danger" type="button">Take out of service</button></div>
+      </li>
+      <li class="card room-row">
+        <div><h2>Hue</h2><p class="muted">Up to 6 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Whiteboard</li></ul></div>
+        <span class="status status-in">In service</span>
+        <div class="actions"><a class="btn" href="room-form.html">Edit</a><button class="btn btn-danger" type="button">Take out of service</button></div>
+      </li>
+      <li class="card room-row">
+        <div><h2>Phu Quoc</h2><p class="muted">Up to 20 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Whiteboard</li><li class="chip">Video conference</li></ul></div>
+        <span class="status status-in">In service</span>
+        <div class="actions"><a class="btn" href="room-form.html">Edit</a><button class="btn btn-danger" type="button">Take out of service</button></div>
+      </li>
+      <li class="card room-row out-of-service">
+        <div><h2>Sa Pa</h2><p class="muted">Up to 2 people</p><ul class="chips"></ul></div>
+        <span class="status status-out">Out of service</span>
+        <div class="actions"><a class="btn" href="room-form.html">Edit</a><button class="btn" type="button">Put back in service</button></div>
+      </li>
+    </ul>
+
+    <p class="state">State: confirmation after clicking "Take out of service" on Ha Long (shown inside the row)</p>
+    <ul class="stack room-list">
+      <li class="card room-row">
+        <div><h2>Ha Long</h2><p class="muted">Up to 12 people</p><ul class="chips"><li class="chip">TV</li><li class="chip">Whiteboard</li><li class="chip">Video conference</li></ul></div>
+        <span class="status status-in">In service</span>
+        <div class="actions"><a class="btn" href="room-form.html">Edit</a><button class="btn btn-danger" type="button">Take out of service</button></div>
+        <div class="confirm" role="alertdialog">
+          <p>Take Ha Long out of service? 2 upcoming bookings will be cancelled. Past and ongoing bookings are kept.</p>
+          <div class="actions"><button class="btn btn-danger" type="button">Take out of service</button><button class="btn" type="button">Keep in service</button></div>
+        </div>
+      </li>
+    </ul>
+
+    <p class="state">State: confirmation for a room without upcoming bookings</p>
+    <ul class="stack room-list">
+      <li class="card room-row">
+        <div><h2>Sa Pa</h2><p class="muted">Up to 2 people</p><ul class="chips"></ul></div>
+        <span class="status status-in">In service</span>
+        <div class="actions"><a class="btn" href="room-form.html">Edit</a><button class="btn btn-danger" type="button">Take out of service</button></div>
+        <div class="confirm" role="alertdialog">
+          <p>Take Sa Pa out of service? It has no upcoming bookings.</p>
+          <div class="actions"><button class="btn btn-danger" type="button">Take out of service</button><button class="btn" type="button">Keep in service</button></div>
+        </div>
+      </li>
+    </ul>
+
+    <p class="state">State: success messages (one at a time, above the list)</p>
+    <div class="stack">
+      <div class="alert alert-success" role="status">Ha Long is out of service. 2 bookings cancelled.</div>
+      <div class="alert alert-success" role="status">Ha Long is back in service.</div>
+      <div class="alert alert-success" role="status">Added Nha Trang.</div>
+      <div class="alert alert-success" role="status">Saved Hue Garden.</div>
+    </div>
+
+    <p class="state">State: loading</p>
+    <div class="card muted">Loading rooms…</div>
+
+    <p class="state">State: error loading rooms (show the ProblemDetail detail when there is one)</p>
+    <div class="alert alert-danger" role="alert">Could not load rooms. Try again later.</div>
+
+    <p class="state">State: error taking out of / putting back into service (above the list; status unchanged)</p>
+    <div class="alert alert-danger" role="alert">Could not change the room. Try again later.</div>
+
+    <p class="state">State: no access — acting user is an employee (no "Manage rooms" link in the header, no list, no buttons)</p>
+    <div class="alert alert-danger" role="alert">Only admins can manage rooms.</div>
+  </main>
+</body>
+</html>
