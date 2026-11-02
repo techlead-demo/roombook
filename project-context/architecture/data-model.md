@@ -51,7 +51,7 @@ Index: `bookings_room_start_idx (room_id, start_at)`.
 
 ## Invariants
 - All instants are UTC; no local date-time columns.
-- Booking start and end are on 15-minute steps (BR-2). Not enforced by the database.
+- Booking start and end are on 15-minute steps (BR-2), the start is not in the past when the booking is made (BR-7), the title is trimmed and 1–100 characters (BR-8). Checked by `BookingService` on `POST /api/bookings`, not enforced by the database.
 - The office day of a booking is derived, never stored (BR-4).
 - Taking a room out of service deletes its bookings with `start_at` after now (BR-11); there is no cancelled state.
 

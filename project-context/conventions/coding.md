@@ -21,7 +21,7 @@
 - Lists are returned as plain JSON arrays; collections are never `null` (use `List.of()`).
 
 ### Validation
-- Bean Validation annotations on request records (`@NotBlank`, `@Size(max = 100)`, `@NotNull`, `@Positive`), `@Valid @RequestBody` in the controller. Field errors become `400` with an `errors` array (see api.md).
+- Bean Validation annotations on request records (`@NotBlank`, `@Size(max = 100)`, `@NotNull`, `@Positive`), `@Valid @RequestBody` in the controller. Field errors become `400` with an `errors` array (see api.md). Exception: an endpoint that acts for a user (`X-User-Id`) takes a plain `@RequestBody`, checks the user first and then validates the body with the injected `jakarta.validation.Validator` (`FieldValidationException.of(violations)`), so an unknown caller gets `401`, not field errors (e.g. `BookingService.create`).
 - Query parameters: typed (`LocalDate`, `Long`, enums) with `@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)` for dates. Wrong types become `400` automatically.
 - Business rules that need data (overlaps, limits) are checked in the service.
 
@@ -58,8 +58,8 @@ throw new ErrorResponseException(HttpStatus.CONFLICT, problem, null);
 - Single-file components with `<script setup lang="ts">`, then `<template>`, then `<style scoped>`.
 - Import with the `@/` alias (`@/api/rooms`), not long relative paths.
 - Two-space indentation, single quotes, no semicolons (match existing files).
-- Routing: `vue-router@4`, routes with a `name` in `src/router/index.ts`, `<RouterView />` in `App.vue`. Navigate by route name (`{ name: 'manage-rooms' }`); add header links as the mockups show them.
-- Shared visual classes (`.card`, `.btn*`, `.alert*`) live in `styles/base.css`; page-specific styles stay scoped.
+- Pages are routed with `vue-router@4`: routes with a `name` in `src/router/index.ts`, `<RouterView />` in `App.vue`; route params reach the page as typed props (`props: (route) => ({ ... })`). The booking pages emit events (`book`, `booked`, `cancel`) and `App.vue` navigates; the admin pages navigate by route name (`{ name: 'manage-rooms' }`). Add header links as the mockups show them.
+- Shared visual classes (`.card`, `.muted`, `.btn*`, `.alert*`) live in `styles/base.css`; page-specific styles stay scoped.
 
 ### TypeScript
 - `strict` mode; no `any` (use `unknown` and narrow). `vue-tsc --noEmit` must pass (`make lint`).

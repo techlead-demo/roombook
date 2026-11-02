@@ -23,10 +23,10 @@ Packages by feature; each feature holds its controller, service, repository, ent
 
 | Package | Contents |
 |---|---|
-| `common/` | `ApiExceptionHandler` (ProblemDetail), `OfficeProperties` (`roombook.office.*`), `TimeConfig` (`Clock` bean) |
+| `common/` | `ApiExceptionHandler` (ProblemDetail), `FieldValidationException` (service-side field errors as `400` + `errors`), `OfficeProperties` (`roombook.office.*`), `TimeConfig` (`Clock` bean) |
 | `user/` | `User` entity, `Role`, `UserRepository`, `UserService` (also `requireAdmin`: 401/403 for admin-only endpoints), `UserController` (`GET /api/users`), `UserResponse` |
 | `room/` | `Room` entity, `Equipment`, `RoomRepository`, `RoomService`, `RoomController` (`GET /api/rooms`), `RoomResponse`; admin: `AdminRoomController` (`/api/admin/rooms`), `RoomAdminService`, `RoomRequest`, `AdminRoomResponse`, `DeactivateRoomResponse` |
-| `booking/` | `Booking` entity, `BookingRepository`, `RoomBookingCount` (query projection), `SampleBookingSeeder` (startup sample data) |
+| `booking/` | `Booking` entity, `BookingRepository`, `RoomBookingCount` (query projection), `BookingService`, `BookingController` (`POST /api/bookings`), `BookingRequest`, `BookingResponse`, `SampleBookingSeeder` (startup sample data) |
 | `availability/` | `AvailabilityController` (`GET /api/rooms/availability`), `AvailabilityService`, `AvailabilityResponse` |
 
 Layering: controllers only bind and validate input and call one service method; services hold the logic and the `@Transactional` boundary and return DTO records; entities never leave the service layer; repositories are Spring Data interfaces.
@@ -43,15 +43,17 @@ The JVM runs in UTC (`-Duser.timezone=UTC` for `spring-boot:run` and tests; `Tim
 | Path | Contents |
 |---|---|
 | `main.ts` | Creates the app, installs Pinia and the router, imports `@design/tokens.css` (= `project-context/design/tokens.css`) and `styles/base.css` |
-| `App.vue` | Header (brand link to `/`, "Manage rooms" link for admins, `UserPicker`) and `<RouterView />` |
-| `router/index.ts` | `vue-router@4` routes (HTML5 history): `/` `rooms` → `RoomListPage`, `/admin/rooms` `manage-rooms` → `ManageRoomsPage`, `/admin/rooms/new` `add-room` and `/admin/rooms/:id/edit` `edit-room` → `RoomFormPage` |
-| `pages/` | One component per screen; loads its own data: `RoomListPage.vue`, `ManageRoomsPage.vue`, `RoomFormPage.vue` |
+| `router/index.ts` | `vue-router@4` routes (`createAppRouter`, HTML5 history): `/` → `RoomListPage` (`rooms`), `/book/:roomId` → `BookingFormPage` (`book`, `roomId` as a number prop), `/admin/rooms` → `ManageRoomsPage` (`manage-rooms`), `/admin/rooms/new` (`add-room`) and `/admin/rooms/:id/edit` (`edit-room`, `id` as a number prop) → `RoomFormPage`; other paths redirect to `/` |
+| `App.vue` | Header (brand link to `/`, "Manage rooms" link for admins, `UserPicker`) and `<RouterView />`; turns the booking pages' events (`book`, `booked`, `cancel`) into navigation and keeps the booking success message, which is cleared when the room list is left |
+| `pages/` | One component per screen; loads its own data: `RoomListPage.vue` (with "Book" buttons and the success message), `BookingFormPage.vue`, `ManageRoomsPage.vue`, `RoomFormPage.vue` |
 | `components/` | Reusable components: `UserPicker.vue`, `RoomTimeline.vue` |
-| `api/` | `http.ts` (fetch wrapper, `ApiError`, `X-User-Id`), one module per resource (`rooms.ts`, `users.ts`, `adminRooms.ts`), `types.ts` (API types, snake_case) |
-| `stores/` | Pinia setup stores for state shared across pages: `user.ts` (users, acting user, `isAdmin`), `notice.ts` (one-time success message handed to the next page) |
-| `utils/` | Pure helpers: `time.ts` (UTC ↔ office time), `equipment.ts` (labels), `roomMessages.ts` (room admin texts, `problemDetailOr`) |
+| `api/` | `http.ts` (fetch wrapper, `ApiError`, `X-User-Id`), one module per resource (`rooms.ts`, `users.ts`, `bookings.ts`, `adminRooms.ts`), `types.ts` (API types, snake_case) |
+| `stores/` | Pinia setup stores for state shared across pages: `user.ts` (users, acting user, `isAdmin`), `notice.ts` (one-time success message handed to the next admin page) |
+| `utils/` | Pure helpers: `time.ts` (UTC ↔ office time), `equipment.ts` (labels), `bookingForm.ts` (booking form validation), `roomMessages.ts` (room admin texts, `problemDetailOr`) |
 | `testing/` | Test-only helpers for Vitest (`fixtures.ts`: users, seed rooms, test router) |
 | `config.ts` | `OFFICE_TIME_ZONE` (mirrors the backend property), timeline display hours |
-| `styles/base.css` | Global element styles and shared classes (`.card`, `.btn`, `.btn-primary`, `.btn-danger`, `.alert`, `.alert-danger`, `.alert-success`) using the tokens |
+| `styles/base.css` | Global element styles and the shared classes of the mockups (`.card`, `.muted`, `.btn`, `.btn-primary`, `.btn-danger`, `.alert-*`) using the tokens |
+
+The booking pages (`RoomListPage`, `BookingFormPage`) do not use the router themselves: they emit events and `App.vue` navigates, so their tests need no router. The admin pages (`ManageRoomsPage`, `RoomFormPage`) navigate with `RouterLink` / `useRouter` by route name and hand success messages over through the `notice` store; their tests use `testRouter()` from `testing/fixtures.ts`.
 
 Admin-only screens show "Only admins can manage rooms." when the acting user is not an admin; the API enforces the same rule (BR-10).

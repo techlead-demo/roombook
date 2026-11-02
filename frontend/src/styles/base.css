@@ -39,6 +39,12 @@ select {
   box-shadow: var(--shadow-card);
 }
 
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -48,13 +54,8 @@ select {
   border-radius: var(--radius-sm);
   background: var(--color-surface);
   color: var(--color-text);
-  text-decoration: none;
   cursor: pointer;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  text-decoration: none;
 }
 
 .btn-primary {
@@ -63,9 +64,18 @@ select {
   color: var(--color-primary-contrast);
 }
 
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
 .btn-danger {
   color: var(--color-danger);
   border-color: var(--color-danger-border);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .alert {

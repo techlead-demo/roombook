@@ -55,6 +55,23 @@ export interface Availability {
   rooms: RoomAvailability[]
 }
 
+export interface BookingRequest {
+  room_id: number
+  title: string
+  start_at: string
+  end_at: string
+}
+
+export interface Booking {
+  id: number
+  room_id: number
+  user_id: number
+  title: string
+  start_at: string
+  end_at: string
+  created_at: string
+}
+
 /** RFC 7807 error body returned for every non-2xx response. */
 export interface ProblemDetail {
   type?: string

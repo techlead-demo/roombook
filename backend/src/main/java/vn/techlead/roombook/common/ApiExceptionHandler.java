@@ -42,7 +42,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail body = createProblemDetail(ex, status, "Request validation failed.", null, null, request);
         List<Map<String, String>> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> Map.of(
-                        "field", error.getField(),
+                        "field", FieldValidationException.jsonFieldName(error.getField()),
                         "message", String.valueOf(error.getDefaultMessage())))
                 .toList();
         body.setProperty("errors", errors);

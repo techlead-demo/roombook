@@ -8,8 +8,8 @@ Static HTML mockups of the screens, built on the shared tokens. Open a file in a
 ## Screens
 | Screen | File | States shown | Status in the app |
 |---|---|---|---|
-| Room list with today's availability | `screens/room-list.html` | default list with timelines, loading, error, success message after booking | Implemented (start page), except the header navigation, the "Book" button and the success message |
-| Booking form | `screens/booking-form.html` | default; errors: overlaps an existing booking, booking too long, time not on a 15-minute step | Not implemented |
+| Room list with today's availability | `screens/room-list.html` | default list with timelines, loading, error, success message after booking | Implemented (start page), except the header navigation |
+| Booking form | `screens/booking-form.html` | default; errors: overlaps an existing booking, booking too long, time not on a 15-minute step | Implemented (RMB-1), except the "overlaps" (RMB-2) and "booking too long" (RMB-6) states and the header navigation |
 | My bookings | `screens/my-bookings.html` | upcoming and past bookings, after cancelling, no upcoming bookings | Not implemented |
 | Find a free room | `screens/find-room.html` | results, no room matches, invalid search | Not implemented |
 
