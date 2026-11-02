@@ -13,3 +13,5 @@ Rules that hold in the product today. New rules get the next free number; a rule
 - **BR-9** A room has a name of 1–50 characters, unique ignoring letter case; leading and trailing spaces are removed before the name is checked and stored. Its capacity is a whole number from 1 to 100. Its equipment is any subset of TV, Whiteboard, Video conference (possibly none).
 - **BR-10** Only admins can add rooms, change them, take them out of service and put them back into service.
 - **BR-11** Taking a room out of service takes effect immediately and lasts until an admin puts it back into service. It cancels (deletes) every booking of the room that starts after that moment; bookings that started at or before it are kept. Putting the room back into service does not restore cancelled bookings.
+- **BR-12** A booking lasts at most 4 hours: its end is at most 4 hours after its start.
+- **BR-13** A user can hold at most 5 upcoming bookings, across all rooms. A new booking is refused when the acting user already has 5 upcoming bookings. Bookings that have started or ended do not count. The limit applies to every user, admins included.
