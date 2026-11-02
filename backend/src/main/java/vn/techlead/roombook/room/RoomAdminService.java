@@ -4,10 +4,16 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Service;
@@ -16,6 +22,7 @@ import org.springframework.web.ErrorResponseException;
 
 import vn.techlead.roombook.booking.BookingRepository;
 import vn.techlead.roombook.booking.RoomBookingCount;
+import vn.techlead.roombook.common.FieldValidationException;
 import vn.techlead.roombook.user.UserService;
 
 /** Room administration for admins (RMB-4, BR-9, BR-10, BR-11). */
@@ -24,18 +31,21 @@ import vn.techlead.roombook.user.UserService;
 public class RoomAdminService {
 
     static final String ADMIN_ONLY = "Only admins can manage rooms.";
+    private static final String NAME_INDEX = "rooms_name_key_idx";
 
     private final RoomRepository roomRepository;
     private final BookingRepository bookingRepository;
     private final UserService userService;
     private final Clock clock;
+    private final Validator validator;
 
-    public RoomAdminService(
-            RoomRepository roomRepository, BookingRepository bookingRepository, UserService userService, Clock clock) {
+    public RoomAdminService(RoomRepository roomRepository, BookingRepository bookingRepository,
+            UserService userService, Clock clock, Validator validator) {
         this.roomRepository = roomRepository;
         this.bookingRepository = bookingRepository;
         this.userService = userService;
         this.clock = clock;
+        this.validator = validator;
     }
 
     /** All rooms, in service and out of service, ordered by name, with their number of upcoming bookings. */
@@ -51,18 +61,21 @@ public class RoomAdminService {
     @Transactional
     public AdminRoomResponse createRoom(Long userId, RoomRequest request) {
         userService.requireAdmin(userId, ADMIN_ONLY);
+        validate(request);
         requireUniqueName(request.name(), null);
-        Room room = roomRepository.save(new Room(request.name(), request.capacity(), equipmentOf(request)));
+        Room room = saveUniqueName(request.name(),
+                () -> roomRepository.saveAndFlush(new Room(request.name(), request.capacity(), equipmentOf(request))));
         return AdminRoomResponse.from(room, 0);
     }
 
     @Transactional
     public AdminRoomResponse updateRoom(Long userId, Long roomId, RoomRequest request) {
         userService.requireAdmin(userId, ADMIN_ONLY);
+        validate(request);
         Room room = findRoom(roomId);
         requireUniqueName(request.name(), roomId);
         room.update(request.name(), request.capacity(), equipmentOf(request));
-        roomRepository.flush();
+        saveUniqueName(request.name(), () -> roomRepository.saveAndFlush(room));
         return AdminRoomResponse.from(room, upcomingBookings(roomId));
     }
 
@@ -100,16 +113,44 @@ public class RoomAdminService {
         });
     }
 
+    /** BR-9 field rules, checked after the admin check so that non-admins get no field feedback (AC-3, AC-27). */
+    private void validate(RoomRequest request) {
+        Set<ConstraintViolation<RoomRequest>> violations = validator.validate(request);
+        if (!violations.isEmpty()) {
+            throw FieldValidationException.of(violations);
+        }
+    }
+
     /** BR-9: names are unique ignoring letter case; a room may keep its own name in another case. */
     private void requireUniqueName(String name, Long ownId) {
         roomRepository.findByNameIgnoreCase(name)
                 .filter(existing -> !existing.getId().equals(ownId))
                 .ifPresent(existing -> {
-                    ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                            HttpStatus.CONFLICT, "A room named \"%s\" already exists.".formatted(existing.getName()));
-                    problem.setTitle("Room name taken");
-                    throw new ErrorResponseException(HttpStatus.CONFLICT, problem, null);
+                    throw nameTaken(existing.getName());
                 });
+    }
+
+    /**
+     * Saves and flushes; a concurrent save of the same name that passed {@link #requireUniqueName} first is
+     * rejected by the unique index {@code rooms_name_key_idx} and answered with the same {@code 409}.
+     */
+    private Room saveUniqueName(String name, Supplier<Room> save) {
+        try {
+            return save.get();
+        } catch (DataIntegrityViolationException ex) {
+            String cause = String.valueOf(ex.getMostSpecificCause().getMessage());
+            if (cause.toLowerCase(Locale.ROOT).contains(NAME_INDEX)) {
+                throw nameTaken(name);
+            }
+            throw ex;
+        }
+    }
+
+    private static ErrorResponseException nameTaken(String existingName) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "A room named \"%s\" already exists.".formatted(existingName));
+        problem.setTitle("Room name taken");
+        return new ErrorResponseException(HttpStatus.CONFLICT, problem, null);
     }
 
     private long upcomingBookings(Long roomId) {

@@ -128,7 +128,9 @@ Body validation (BR-9) for `POST` and `PUT`: `400` with `errors` entries; nothin
 | `capacity` | below 1 or above 100 | `must be between 1 and 100` |
 | `equipment` | missing (`[]` is valid) | `must not be null` |
 
-An unknown equipment value (e.g. `"PROJECTOR"`) is a `400` without `errors`. A name equal to another room's name ignoring letter case and surrounding spaces answers `409` `A room named "<existing name>" already exists.`; a room may change the letter case of its own name.
+An unknown equipment value (e.g. `"PROJECTOR"`) is a `400` without `errors`. A name equal to another room's name ignoring letter case and surrounding spaces answers `409` `A room named "<existing name>" already exists.`; a room may change the letter case of its own name. When two saves of the same name race, the unique index `rooms_name_key_idx` rejects the second one, which is answered with the same `409` (detail with the requested name).
+
+Checks run in this order: the acting user (`401` / `403`), then Bean Validation of the body (run in `RoomAdminService`, not with `@Valid`, so a non-admin gets no field feedback), then the room id (`404`, `PUT`), then the name (`409`). A body that is not valid JSON or has an unknown equipment value is still answered with `400` before the user check.
 
 ### `POST /api/admin/rooms/{id}/deactivate` → `200`
 Takes the room out of service and deletes its bookings that start after now; bookings that started at or before now are kept (BR-11).

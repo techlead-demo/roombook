@@ -43,6 +43,10 @@ class AdminRoomControllerTest {
 
     static final Instant NOW = Instant.parse("2026-11-02T03:00:00Z");
 
+    /** A valid booking of Ha Long today 12:00–13:00 office time, for POST /api/bookings (RMB-1). */
+    static final String HA_LONG_BOOKING =
+            "{\"room_id\":1,\"title\":\"Sprint planning\",\"start_at\":\"2026-11-02T05:00:00Z\",\"end_at\":\"2026-11-02T06:00:00Z\"}";
+
     @TestConfiguration
     static class FixedClockConfig {
         @Bean
@@ -99,6 +103,25 @@ class AdminRoomControllerTest {
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.detail").value("Unknown user"));
         assertThat(roomRepository.findByName("Ha Long").orElseThrow().isActive()).isTrue();
+    }
+
+    @Test
+    void ac3_checksAccessBeforeTheBodySoNonAdminsGetNoFieldErrors() throws Exception {
+        String invalid = "{\"name\":\"\",\"capacity\":0}";
+        for (MockHttpServletRequestBuilder request : new MockHttpServletRequestBuilder[] {
+                post("/api/admin/rooms"), put("/api/admin/rooms/3") }) {
+            mockMvc.perform(request.header("X-User-Id", "2").contentType(MediaType.APPLICATION_JSON).content(invalid))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.detail").value("Only admins can manage rooms."))
+                    .andExpect(jsonPath("$.errors").doesNotExist());
+        }
+        for (MockHttpServletRequestBuilder request : new MockHttpServletRequestBuilder[] {
+                post("/api/admin/rooms"), put("/api/admin/rooms/3") }) {
+            mockMvc.perform(request.contentType(MediaType.APPLICATION_JSON).content(invalid))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.detail").value("Unknown user"))
+                    .andExpect(jsonPath("$.errors").doesNotExist());
+        }
     }
 
     // --- List (AC-24, AC-4) ---
@@ -323,6 +346,10 @@ class AdminRoomControllerTest {
         mockMvc.perform(get("/api/rooms/availability").param("date", "2026-11-02"))
                 .andExpect(jsonPath("$.rooms.length()").value(5))
                 .andExpect(jsonPath("$.rooms[*].room_id").value(not(hasItem(1))));
+        mockMvc.perform(post("/api/bookings").header("X-User-Id", "2")
+                        .contentType(MediaType.APPLICATION_JSON).content(HA_LONG_BOOKING))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Room 1 not found."));
     }
 
     @Test
@@ -344,6 +371,10 @@ class AdminRoomControllerTest {
                 .andExpect(jsonPath("$.rooms[1].busy.length()").value(2))
                 .andExpect(jsonPath("$.rooms[1].busy[0].start_at").value("2026-11-02T01:00:00Z"))
                 .andExpect(jsonPath("$.rooms[1].busy[1].start_at").value("2026-11-02T02:30:00Z"));
+        mockMvc.perform(post("/api/bookings").header("X-User-Id", "2")
+                        .contentType(MediaType.APPLICATION_JSON).content(HA_LONG_BOOKING))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.room_id").value(1));
     }
 
     @Test

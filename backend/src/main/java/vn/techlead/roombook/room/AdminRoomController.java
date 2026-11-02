@@ -2,8 +2,6 @@ package vn.techlead.roombook.room;
 
 import java.util.List;
 
-import jakarta.validation.Valid;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,11 +29,12 @@ public class AdminRoomController {
         return roomAdminService.listRooms(userId);
     }
 
+    /** The body is validated in the service after the admin check (no {@code @Valid}), so 401/403 come first (AC-3). */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public AdminRoomResponse createRoom(
             @RequestHeader(value = "X-User-Id", required = false) Long userId,
-            @Valid @RequestBody RoomRequest request) {
+            @RequestBody RoomRequest request) {
         return roomAdminService.createRoom(userId, request);
     }
 
@@ -43,7 +42,7 @@ public class AdminRoomController {
     public AdminRoomResponse updateRoom(
             @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable Long id,
-            @Valid @RequestBody RoomRequest request) {
+            @RequestBody RoomRequest request) {
         return roomAdminService.updateRoom(userId, id, request);
     }
 
