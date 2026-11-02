@@ -24,6 +24,15 @@ function adminRow(page: Page, name: string) {
 }
 
 test.describe('manage rooms', () => {
+  // Rooms cannot be deleted: take this file's rooms out of service so other tests see only the seed rooms as active.
+  test.afterEach(async ({ request }) => {
+    const response = await request.get('/api/admin/rooms', { headers: { 'X-User-Id': '1' } })
+    const rooms = (await response.json()) as { id: number; name: string; active: boolean }[]
+    for (const room of rooms.filter((candidate) => candidate.active && candidate.name.startsWith('E2E '))) {
+      await request.post(`/api/admin/rooms/${room.id}/deactivate`, { headers: { 'X-User-Id': '1' } })
+    }
+  })
+
   test('AC-1, AC-4, AC-6, AC-7: an admin adds a room that then appears on the room list', async ({ page }) => {
     const name = uniqueName('E2E Added')
     await actAs(page, 'An Nguyen (admin)')
@@ -49,6 +58,9 @@ test.describe('manage rooms', () => {
     await page.getByRole('link', { name: 'RoomBook' }).click()
     const card = page.getByTestId('room-card').filter({ has: page.getByRole('heading', { name, exact: true }) })
     await expect(card.getByText('Up to 10 people')).toBeVisible()
+
+    await card.getByRole('button', { name: 'Book' }).click()
+    await expect(page.getByLabel('Room').locator('option:checked')).toHaveText(`${name} · up to 10 people`)
   })
 
   test('AC-1, AC-2: an employee has no link and no access', async ({ page }) => {
@@ -135,6 +147,9 @@ test.describe('manage rooms', () => {
     await page.getByRole('link', { name: 'RoomBook' }).click()
     await expect(page.getByTestId('room-card').first()).toBeVisible()
     await expect(page.getByRole('heading', { name, exact: true })).toHaveCount(0)
+    await page.getByTestId('room-card').first().getByRole('button', { name: 'Book' }).click()
+    await expect(page.getByLabel('Room').locator('option').first()).toBeAttached()
+    await expect(page.getByLabel('Room').locator('option', { hasText: name })).toHaveCount(0)
 
     await page.getByRole('link', { name: 'Manage rooms' }).click()
     await row.getByRole('button', { name: 'Put back in service' }).click()
@@ -143,6 +158,8 @@ test.describe('manage rooms', () => {
     await expect(row.getByRole('button', { name: 'Take out of service' })).toBeVisible()
 
     await page.getByRole('link', { name: 'RoomBook' }).click()
-    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
+    const card = page.getByTestId('room-card').filter({ has: page.getByRole('heading', { name, exact: true }) })
+    await card.getByRole('button', { name: 'Book' }).click()
+    await expect(page.getByLabel('Room').locator('option:checked')).toHaveText(`${name} · up to 5 people`)
   })
 })

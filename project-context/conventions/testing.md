@@ -31,7 +31,7 @@ What goes where:
 ## End to end
 - `playwright.config.ts` starts the API with profile `e2e` (fresh in-memory database: seed users and rooms, plus today's sample bookings) and the Vite dev server, on `API_PORT`/`WEB_PORT`. Outside CI, servers already running on those ports are reused.
 - Tests run one at a time (`workers: 1`) against one database. Each test creates the data it needs through the UI or API, uses unique titles, and does not depend on other tests or on data created by them.
-- Tests never change the seed rooms (rename, take out of service): they create their own rooms with unique names (`POST /api/admin/rooms` with `X-User-Id: 1`). So the room list may hold more than the 6 seed rooms; do not assert an exact room count.
+- Tests never change the seed rooms (rename, take out of service): they create their own rooms with unique names starting with `E2E ` (`POST /api/admin/rooms` with `X-User-Id: 1`) and take them out of service in `afterEach` (rooms cannot be deleted), so other tests see only the 6 seed rooms as active. Tests run one at a time (`workers: 1`), so this cleanup is enough.
 - Locate by role, label and text (`getByRole('heading', { name: 'Rooms' })`, `getByLabel('Acting as')`); `getByTestId` only where the app defines a `data-testid`.
 - Times on screen are office time; a test that books uses future 15-minute-aligned times.
 - Browsers: `npx playwright install chromium` once per machine.

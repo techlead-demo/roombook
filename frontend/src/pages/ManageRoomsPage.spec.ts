@@ -203,4 +203,20 @@ describe('ManageRoomsPage', () => {
     expect(wrapper.get('[role="alert"]').text()).toBe('Room 1 is already out of service.')
     expect(row(wrapper, 'Ha Long').get('.status').text()).toBe('In service')
   })
+
+  it('AC-23: disables the confirmation\'s "Take out of service" button while the request runs', async () => {
+    let reject: (reason: unknown) => void = () => {}
+    vi.mocked(deactivateRoom).mockReturnValue(new Promise((_, r) => (reject = r)))
+    const wrapper = await mountPage()
+    await button(row(wrapper, 'Ha Long'), 'Take out of service').trigger('click')
+    await flushPromises()
+
+    await button(row(wrapper, 'Ha Long').get('[role="alertdialog"]'), 'Take out of service').trigger('click')
+    expect(button(row(wrapper, 'Ha Long').get('[role="alertdialog"]'), 'Take out of service').attributes('disabled')).toBeDefined()
+
+    reject(new ApiError(500, null))
+    await flushPromises()
+    expect(wrapper.get('[role="alert"]').text()).toBe('Could not change the room. Try again later.')
+    expect(row(wrapper, 'Ha Long').get('.status').text()).toBe('In service')
+  })
 })

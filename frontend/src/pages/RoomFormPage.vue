@@ -40,6 +40,8 @@ async function loadRoom(id: number): Promise<void> {
   loadError.value = null
   try {
     const room = (await fetchAdminRooms()).find((candidate) => candidate.id === id)
+    // Another room (or the Add form) was opened meanwhile
+    if (props.id !== id) return
     if (!room) {
       loadError.value = `Room ${id} not found.`
       return
@@ -54,10 +56,22 @@ async function loadRoom(id: number): Promise<void> {
   }
 }
 
+function resetForm(): void {
+  name.value = ''
+  capacity.value = ''
+  equipment.value = []
+  loadError.value = null
+  formError.value = null
+  nameError.value = null
+  capacityError.value = null
+}
+
+// The router reuses this component between /admin/rooms/new and /admin/rooms/:id/edit, so the id can change
 watch(
-  () => userStore.isAdmin,
-  (isAdmin) => {
-    if (isAdmin && props.id !== undefined) void loadRoom(props.id)
+  [() => userStore.isAdmin, () => props.id],
+  ([isAdmin, id], previous) => {
+    if (id !== previous?.[1]) resetForm()
+    if (isAdmin && id !== undefined) void loadRoom(id)
   },
   { immediate: true },
 )

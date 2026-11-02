@@ -5,6 +5,7 @@ import type { Router } from 'vue-router'
 import { createRoom, fetchAdminRooms, updateRoom } from '@/api/adminRooms'
 import { ApiError } from '@/api/http'
 import { useNoticeStore } from '@/stores/notice'
+import { useUserStore } from '@/stores/user'
 import { actAs, seedAdminRooms, testRouter } from '@/testing/fixtures'
 import RoomFormPage from './RoomFormPage.vue'
 
@@ -62,6 +63,35 @@ describe('RoomFormPage', () => {
     expect(wrapper.text()).toBe('Only admins can manage rooms.')
     expect(wrapper.find('form').exists()).toBe(false)
     expect(fetchAdminRooms).not.toHaveBeenCalled()
+  })
+
+  it('AC-2: shows only the no-access alert when the user switches to an employee while the form is open', async () => {
+    const wrapper = await mountForm(3)
+    expect(wrapper.find('form').exists()).toBe(true)
+
+    useUserStore().selectUser(2)
+    await flushPromises()
+
+    expect(wrapper.text()).toBe('Only admins can manage rooms.')
+    expect(wrapper.find('form').exists()).toBe(false)
+  })
+
+  it('shows the room of the new id, or an empty Add form, when the route reuses the page', async () => {
+    const wrapper = await mountForm(3)
+    expect((wrapper.get('#room-name').element as HTMLInputElement).value).toBe('Hue')
+
+    await wrapper.setProps({ id: 1 })
+    await flushPromises()
+    expect(wrapper.get('h1').text()).toBe('Edit room')
+    expect((wrapper.get('#room-name').element as HTMLInputElement).value).toBe('Ha Long')
+    expect((wrapper.get('#room-capacity').element as HTMLInputElement).value).toBe('12')
+
+    await wrapper.setProps({ id: undefined })
+    await flushPromises()
+    expect(wrapper.get('h1').text()).toBe('Add room')
+    expect((wrapper.get('#room-name').element as HTMLInputElement).value).toBe('')
+    expect((wrapper.get('#room-capacity').element as HTMLInputElement).value).toBe('')
+    expect(checkedEquipment(wrapper)).toEqual([])
   })
 
   it('AC-6: opens an empty Add room form', async () => {
