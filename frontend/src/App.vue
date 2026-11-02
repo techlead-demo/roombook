@@ -1,6 +1,13 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import UserPicker from '@/components/UserPicker.vue'
+import BookingFormPage from '@/pages/BookingFormPage.vue'
 import RoomListPage from '@/pages/RoomListPage.vue'
+
+/** The shown screen. The success message lives only as long as the room list is shown. */
+type View = { page: 'rooms'; successMessage: string | null } | { page: 'book'; roomId: number }
+
+const view = ref<View>({ page: 'rooms', successMessage: null })
 </script>
 
 <template>
@@ -9,7 +16,17 @@ import RoomListPage from '@/pages/RoomListPage.vue'
     <UserPicker />
   </header>
   <main class="app-main">
-    <RoomListPage />
+    <BookingFormPage
+      v-if="view.page === 'book'"
+      :room-id="view.roomId"
+      @booked="(message) => (view = { page: 'rooms', successMessage: message })"
+      @cancel="view = { page: 'rooms', successMessage: null }"
+    />
+    <RoomListPage
+      v-else
+      :success-message="view.successMessage"
+      @book="(roomId) => (view = { page: 'book', roomId })"
+    />
   </main>
 </template>
 

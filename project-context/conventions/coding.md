@@ -58,7 +58,7 @@ throw new ErrorResponseException(HttpStatus.CONFLICT, problem, null);
 - Single-file components with `<script setup lang="ts">`, then `<template>`, then `<style scoped>`.
 - Import with the `@/` alias (`@/api/rooms`), not long relative paths.
 - Two-space indentation, single quotes, no semicolons (match existing files).
-- When a second page is needed, add `vue-router@4` with routes in `src/router/index.ts`, render `<RouterView />` in `App.vue`, and add the header navigation shown in the mockups.
+- When the header navigation shown in the mockups is added (RMB-3), add `vue-router@4` with routes in `src/router/index.ts` and render `<RouterView />` in `App.vue`. Until then `App.vue` switches between the room list and the booking form with a `view` ref.
 
 ### TypeScript
 - `strict` mode; no `any` (use `unknown` and narrow). `vue-tsc --noEmit` must pass (`make lint`).

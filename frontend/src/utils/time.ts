@@ -61,6 +61,29 @@ export function minutesFromOfficeMidnight(instant: Date | string, date: string, 
   return dayDifference * 1440 + hour * 60 + minute
 }
 
+/**
+ * UTC instant (ISO 8601 with `Z`) of the wall-clock time `time` ("HH:mm") on `date` (YYYY-MM-DD) in `timeZone`.
+ * Use this to send office-time input to the API.
+ */
+export function toUtcInstant(date: string, time: string, timeZone: string): string {
+  const [year, month, day] = date.split('-').map(Number)
+  const [hour, minute] = time.split(':').map(Number)
+  const wallClock = Date.UTC(year, month - 1, day, hour, minute)
+  let instant = wallClock
+  // Correct by the zone offset; the second pass settles offsets that change around `instant`.
+  for (let pass = 0; pass < 2; pass++) {
+    const shown = zonedParts(new Date(instant), timeZone)
+    instant += wallClock - Date.UTC(shown.year, shown.month - 1, shown.day, shown.hour, shown.minute)
+  }
+  return new Date(instant).toISOString().replace('.000Z', 'Z')
+}
+
+/** True when a wall-clock time "HH:mm" is on a 15-minute step (:00, :15, :30, :45). */
+export function isQuarterHourTime(time: string): boolean {
+  const match = /^(\d{2}):(\d{2})(?::00(?:\.0+)?)?$/.exec(time)
+  return match !== null && Number(match[2]) % 15 === 0
+}
+
 /** Display form of a calendar date (YYYY-MM-DD), e.g. "Mon 2 Nov 2026". */
 export function formatCalendarDate(date: string): string {
   const [year, month, day] = date.split('-').map(Number)

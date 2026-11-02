@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { formatCalendarDate, formatOfficeTime, formatOfficeTimeRange, minutesFromOfficeMidnight, toOfficeDate } from './time'
+import {
+  formatCalendarDate,
+  formatOfficeTime,
+  formatOfficeTimeRange,
+  isQuarterHourTime,
+  minutesFromOfficeMidnight,
+  toOfficeDate,
+  toUtcInstant,
+} from './time'
 
 const ZONE = 'Asia/Ho_Chi_Minh' // UTC+7
 
@@ -26,5 +34,19 @@ describe('time utils', () => {
 
   it('formats a calendar date for display', () => {
     expect(formatCalendarDate('2026-11-02')).toBe('Mon 2 Nov 2026')
+  })
+
+  it('AC-6: converts an office date and wall-clock time to a UTC instant', () => {
+    expect(toUtcInstant('2026-11-02', '11:00', ZONE)).toBe('2026-11-02T04:00:00Z')
+    expect(toUtcInstant('2026-11-02', '00:00', ZONE)).toBe('2026-11-01T17:00:00Z')
+    expect(toUtcInstant('2026-11-02', '23:45', ZONE)).toBe('2026-11-02T16:45:00Z')
+  })
+
+  it('AC-11: recognises wall-clock times on a 15-minute step', () => {
+    expect(isQuarterHourTime('09:00')).toBe(true)
+    expect(isQuarterHourTime('09:45')).toBe(true)
+    expect(isQuarterHourTime('09:10')).toBe(false)
+    expect(isQuarterHourTime('10:05')).toBe(false)
+    expect(isQuarterHourTime('09:00:30')).toBe(false)
   })
 })
