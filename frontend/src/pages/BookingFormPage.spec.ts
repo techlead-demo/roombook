@@ -202,6 +202,29 @@ describe('BookingFormPage', () => {
     expect(createBooking).not.toHaveBeenCalled()
   })
 
+  it('AC-13: books with start 08:15 at 08:07 after the past-start error', async () => {
+    const wrapper = await mountForm()
+    await fill(wrapper, { start: '08:00', end: '09:00', title: 'Stand-up' })
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.get('#booking-start-error').text()).toBe('Start is in the past. Choose a later time.')
+    expect(createBooking).not.toHaveBeenCalled()
+
+    await fill(wrapper, { start: '08:15' })
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('#booking-start-error').exists()).toBe(false)
+    expect(createBooking).toHaveBeenCalledWith({
+      room_id: 1,
+      title: 'Stand-up',
+      start_at: '2026-11-02T01:15:00Z',
+      end_at: '2026-11-02T02:00:00Z',
+    })
+    expect(wrapper.emitted('booked')).toHaveLength(1)
+  })
+
   it('AC-15: keeps only the first 100 characters of the title', async () => {
     const wrapper = await mountForm()
     const input = wrapper.get<HTMLInputElement>('#booking-title')

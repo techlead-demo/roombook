@@ -1,7 +1,7 @@
 ---
 issue: RMB-1
 spec_version: 1
-revision: 0
+revision: 2
 ---
 
 # Implementation plan — RMB-1
@@ -60,7 +60,19 @@ None (the existing `bookings` table is used). `data-model.md` invariants now nam
 - `project-context/design/README.md` — implementation status of the two screens.
 
 ## Risks and notes
-- **No router (deviation from conventions/coding.md).** The convention said to add `vue-router@4` with the second page *and* the header navigation; the spec puts the header navigation out of scope (RMB-3), and adding a dependency needs network access this run does not have. `App.vue` switches pages with a `view` ref; the convention now says the router comes with the navigation. Reviewers may prefer the router now.
+- **No router (deviation from conventions/coding.md; resolved in Revision 2, the router is added).** The convention said to add `vue-router@4` with the second page *and* the header navigation; the spec puts the header navigation out of scope (RMB-3), and adding a dependency needs network access this run does not have. `App.vue` switches pages with a `view` ref; the convention now says the router comes with the navigation. Reviewers may prefer the router now.
 - `ApiExceptionHandler` now reports `@Valid` field names in snake_case. No existing endpoint had request bodies, so nothing else changes.
 - Overlaps are still accepted (A-1, RMB-2). E2E tests use future times and distinct rooms/dates so they do not depend on each other or on the time of day; the today-part of the AC-7 e2e test is skipped only after 23:15 office time, and its timeline assertion runs only when the slot falls inside 08:00–18:00 (the timeline itself is covered by Vitest).
 - A non-numeric `X-User-Id` header gives `400` (type mismatch) instead of `401`; the spec only covers missing and unknown ids.
+
+## Revision 2
+Review 1 (AI reviewer, 3 minor + 1 nit); the admin asked to fix the minors.
+
+| Feedback item | Resolution |
+|---|---|
+| [minor] `conventions/coding.md` relaxed to skip `vue-router` | Fixed: `vue-router@4` added (installed from the local npm cache, no network needed). Routes in `frontend/src/router/index.ts` (`/` → `rooms`, `/book/:roomId(\d+)` → `book`, other paths → `/`); `App.vue` renders `<RouterView />`, navigates on the pages' events and clears the success message when the room list is left. The convention again says pages are routed with `vue-router@4`; only the header navigation waits for RMB-3 (out of scope in the spec). New `frontend/src/App.spec.ts` covers the routed flow (AC-1, AC-6, AC-10, message cleared). The dependency was already named by the convention, so no ADR. |
+| [minor] e2e "past start" check fails between 00:00 and 00:14 office time (AC-13) | Fixed: the test uses yesterday 09:00–10:00, which is in the past at any time of day. |
+| [nit] no component test that start 08:15 at 08:07 is booked (AC-13) | Fixed: `BookingFormPage.spec.ts` › "AC-13: books with start 08:15 at 08:07 after the past-start error". |
+| [minor] missing/unknown `X-User-Id` with an invalid body gives 400, not 401 (AC-19) | Fixed: the controller takes a plain `@RequestBody`; `BookingService.create` checks the user first, then validates the body with the injected `jakarta.validation.Validator` (`FieldValidationException.of(violations)`, same `400` + `errors` shape and snake_case names), then the room and the time rules. New test `ac19ChecksUserBeforeValidatingTheBody`. `api.md` (check order) and `coding.md` (validation exception for user endpoints) updated. A body that is not valid JSON still gets `400` before the user check. |
+
+AC → test additions: AC-1, AC-6, AC-10 also `frontend/src/App.spec.ts`; AC-13 also `BookingFormPage.spec.ts` › "AC-13: books with start 08:15…"; AC-19 also `BookingControllerTest` › `ac19ChecksUserBeforeValidatingTheBody`.

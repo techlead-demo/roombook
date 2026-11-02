@@ -154,7 +154,8 @@ test.describe('booking a room', () => {
     await expect(page.getByText('Use 15-minute steps, for example 09:00, 09:15, 09:30 or 09:45.')).toBeVisible()
     await expect(page.getByLabel('Start', { exact: true })).toHaveValue('09:10')
 
-    await fillForm(page, { date: officeDate(), start: '00:00', end: '00:15', title: 'Past' })
+    // Yesterday is in the past at any time of day
+    await fillForm(page, { date: officeDate(-1), start: '09:00', end: '10:00', title: 'Past' })
     await page.getByRole('button', { name: 'Book room' }).click()
     await expect(page.getByText('Start is in the past. Choose a later time.')).toBeVisible()
     expect(posted).toBe(false)
