@@ -5,6 +5,8 @@
 - **Equipment** — fixed features of a room: `TV`, `WHITEBOARD`, `VIDEO_CONFERENCE` (shown as "TV", "Whiteboard", "Video conference").
 - **Active room** — a room in service; only active rooms are shown and considered for availability (BR-1).
 - **Booking** — a reservation of one room by one user for a time interval, with a title. Stored with UTC start and end instants.
+- **Booking title** — the short name of a booking shown to users, e.g. "Sprint planning"; 1–100 characters, trimmed (BR-8).
+- **Booking form** — the "Book a room" screen where a user picks room, date, start, end and title to make a booking.
 - **Slot / 15-minute step** — the time grid for bookings: start and end times fall on :00, :15, :30 or :45 (BR-2).
 - **Busy interval** — the start and end (UTC) of a booking, as shown on a room's timeline.
 - **Availability** — for a given office day, the busy intervals of each active room; any other time is free.
