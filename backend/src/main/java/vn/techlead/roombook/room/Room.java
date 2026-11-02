@@ -42,6 +42,30 @@ public class Room {
     protected Room() {
     }
 
+    /** A new room starts in service. */
+    public Room(String name, int capacity, Set<Equipment> equipment) {
+        this.name = name;
+        this.capacity = capacity;
+        this.equipment = new HashSet<>(equipment);
+        this.active = true;
+    }
+
+    /** Changes name, capacity and equipment; never the status (RMB-4 A-5). */
+    public void update(String name, int capacity, Set<Equipment> equipment) {
+        this.name = name;
+        this.capacity = capacity;
+        this.equipment.clear();
+        this.equipment.addAll(equipment);
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
     public Long getId() {
         return id;
     }
