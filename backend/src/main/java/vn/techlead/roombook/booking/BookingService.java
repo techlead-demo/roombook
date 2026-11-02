@@ -5,6 +5,10 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -29,14 +33,16 @@ public class BookingService {
     private final UserRepository userRepository;
     private final OfficeProperties office;
     private final Clock clock;
+    private final Validator validator;
 
     public BookingService(BookingRepository bookingRepository, RoomRepository roomRepository,
-            UserRepository userRepository, OfficeProperties office, Clock clock) {
+            UserRepository userRepository, OfficeProperties office, Clock clock, Validator validator) {
         this.bookingRepository = bookingRepository;
         this.roomRepository = roomRepository;
         this.userRepository = userRepository;
         this.office = office;
         this.clock = clock;
+        this.validator = validator;
     }
 
     /** Books an active room for the acting user (BR-2, BR-3, BR-7, BR-8). */
@@ -46,6 +52,11 @@ public class BookingService {
         if (user == null) {
             throw new ErrorResponseException(HttpStatus.UNAUTHORIZED,
                     ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Unknown user"), null);
+        }
+        // Validated here, after the user check, so that an unknown caller gets 401 and no field feedback (AC-19)
+        Set<ConstraintViolation<BookingRequest>> violations = validator.validate(request);
+        if (!violations.isEmpty()) {
+            throw FieldValidationException.of(violations);
         }
         Room room = roomRepository.findById(request.roomId()).filter(Room::isActive).orElseThrow(() ->
                 new ErrorResponseException(HttpStatus.NOT_FOUND, ProblemDetail.forStatusAndDetail(

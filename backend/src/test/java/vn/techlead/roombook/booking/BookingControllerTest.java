@@ -166,6 +166,17 @@ class BookingControllerTest {
         assertThat(bookingRepository.count()).isZero();
     }
 
+    @ParameterizedTest(name = "AC-19: user {0} with an invalid body -> 401")
+    @CsvSource(nullValues = "none", value = {"none", "99"})
+    void ac19ChecksUserBeforeValidatingTheBody(String userId) throws Exception {
+        postBooking(userId, "{\"title\":\"  \",\"start_at\":\"2026-11-02T04:10:00Z\"}")
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Unknown user"))
+                .andExpect(jsonPath("$.errors").doesNotExist());
+        assertThat(bookingRepository.count()).isZero();
+    }
+
     @Test
     void ac20RejectsUnknownRoomWith404() throws Exception {
         postBooking(String.valueOf(binhId()), body(99, "\"Sprint planning\"", "2026-11-02T04:00:00Z", "2026-11-02T05:00:00Z"))

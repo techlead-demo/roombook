@@ -1,7 +1,6 @@
 package vn.techlead.roombook.common;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -43,16 +42,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail body = createProblemDetail(ex, status, "Request validation failed.", null, null, request);
         List<Map<String, String>> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> Map.of(
-                        "field", toSnakeCase(error.getField()),
+                        "field", FieldValidationException.jsonFieldName(error.getField()),
                         "message", String.valueOf(error.getDefaultMessage())))
                 .toList();
         body.setProperty("errors", errors);
         return handleExceptionInternal(ex, body, headers, status, request);
-    }
-
-    /** Field names in {@code errors} use the JSON (snake_case) names, e.g. {@code startAt} → {@code start_at}. */
-    private static String toSnakeCase(String field) {
-        return field.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase(Locale.ROOT);
     }
 
     @ExceptionHandler(Exception.class)

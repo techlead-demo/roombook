@@ -92,4 +92,4 @@ Errors (nothing is stored):
 | `end_at` equal to or before `start_at` | 400 | `end_at`: `must be after start_at` |
 | `start_at` before now (a start equal to now is accepted) | 400 | `start_at`: `must not be in the past` |
 
-Bean Validation (missing fields, title) runs before the user and room checks; the time rules after them.
+Checks run in this order: the user (`401`), then Bean Validation of the body (missing fields, title; run in `BookingService`, not with `@Valid`, so an unknown caller gets no field feedback), then the room (`404`), then the time rules. A body that is not valid JSON is still answered with `400` before the user check.
