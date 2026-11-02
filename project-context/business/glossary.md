@@ -7,6 +7,10 @@
 - **Out of service** — a room an admin has taken out of use (inactive); it cannot be booked and is shown only on the Manage rooms screen until it is put back into service (BR-11).
 - **Manage rooms** — the admin-only screen to add, edit, take out of service and put back into service rooms (BR-10).
 - **Upcoming booking** — a booking whose start is after the current time.
+- **Ongoing booking** — a booking that has started but not yet ended (start at or before now, end after now); it cannot be cancelled (BR-12).
+- **Past booking** — a booking whose end is at or before the current time.
+- **Cancel a booking** — delete one of your own upcoming bookings so its time is free again (BR-12).
+- **My bookings** — the screen listing the acting user's ongoing and upcoming bookings (Upcoming) and the bookings that ended in the last 30 days (Past).
 - **Booking** — a reservation of one room by one user for a time interval, with a title. Stored with UTC start and end instants.
 - **Booking title** — the short name of a booking shown to users, e.g. "Sprint planning"; 1–100 characters, trimmed (BR-8).
 - **Booking form** — the "Book a room" screen where a user picks room, date, start, end and title to make a booking.
