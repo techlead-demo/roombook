@@ -20,6 +20,23 @@ export interface Room {
   active: boolean
 }
 
+/** A room on the Manage rooms screen (`GET /api/admin/rooms`). */
+export interface AdminRoom extends Room {
+  upcoming_bookings: number
+}
+
+/** Body of `POST /api/admin/rooms` and `PUT /api/admin/rooms/{id}`. */
+export interface RoomInput {
+  name: string
+  capacity: number
+  equipment: Equipment[]
+}
+
+export interface DeactivateRoomResult {
+  room: AdminRoom
+  cancelled_bookings: number
+}
+
 export interface BusyInterval {
   start_at: string
   end_at: string
