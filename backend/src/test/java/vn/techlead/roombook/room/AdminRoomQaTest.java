@@ -188,6 +188,35 @@ class AdminRoomQaTest {
         assertThat(roomRepository.findById(3L).orElseThrow().getCapacity()).isEqualTo(6);
     }
 
+    /** Regression (WebConfig): the admin check still runs before the body is read. */
+    @Test
+    void tc40_ac3_employeeGets403EvenForUnreadableBody() throws Exception {
+        for (String body : new String[] {
+                "{\"name\":\"Nha Trang\",\"capacity\":2.5,\"equipment\":[]}",
+                "{\"name\":\"Nha Trang\",\"capacity\":10,\"equipment\":[\"PROJECTOR\"]}" }) {
+            mockMvc.perform(post("/api/admin/rooms").header("X-User-Id", "2")
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.detail").value("Only admins can manage rooms."));
+            mockMvc.perform(put("/api/admin/rooms/3").contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.detail").value("Unknown user"));
+        }
+        assertThat(roomRepository.count()).isEqualTo(6);
+    }
+
+    /** Regression (global accept-float-as-int=false): a fractional room id is not truncated into a booking of room 1. */
+    @Test
+    void tc41_fractionalRoomIdOnBookingIsRejectedWith400() throws Exception {
+        long before = bookingRepository.count();
+        mockMvc.perform(post("/api/bookings").header("X-User-Id", "2").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"room_id\":1.5,\"title\":\"QA\",\"start_at\":\"2026-11-03T02:00:00Z\","
+                                + "\"end_at\":\"2026-11-03T03:00:00Z\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+        assertThat(bookingRepository.count()).isEqualTo(before);
+    }
+
     @Test
     void tc34_ac28_activateReportsUpcomingBookingsKeptFromBeforeDeactivation() throws Exception {
         Room saPa = room("Sa Pa");
