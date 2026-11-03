@@ -68,7 +68,7 @@ Errors:
 | `date` not a valid `YYYY-MM-DD` date | 400 | `Invalid value '<value>' for parameter 'date'.` |
 
 ### `POST /api/bookings`
-Books an active room for the acting user (`X-User-Id`). BR-2, BR-3, BR-7, BR-8. Overlapping bookings are still accepted (RMB-2).
+Books an active room for the acting user (`X-User-Id`). BR-2, BR-3, BR-7, BR-8, BR-12 (no overlap with any existing booking of the same room).
 
 Request (`title` is stripped of leading and trailing spaces before it is checked and stored):
 ```json
@@ -91,5 +91,6 @@ Errors (nothing is stored):
 | `start_at` / `end_at` not on a 15-minute step (office time, zero seconds) | 400 | that field: `must be on a 15-minute step` |
 | `end_at` equal to or before `start_at` | 400 | `end_at`: `must be after start_at` |
 | `start_at` before now (a start equal to now is accepted) | 400 | `start_at`: `must not be in the past` |
+| Overlaps an existing booking of the room (`start_at < existing.end_at` and `end_at > existing.start_at`; back-to-back is allowed) | 409 | `<room> is already booked from 09:00 to 10:00 on Mon 2 Nov 2026. Choose another time or another room.` — the earliest-starting conflicting booking, office time; when it starts and ends on different office days: `<room> is already booked from 22:00 on Mon 2 Nov 2026 to 01:00 on Tue 3 Nov 2026. Choose another time or another room.` |
 
-Checks run in this order: the user (`401`), then Bean Validation of the body (missing fields, title; run in `BookingService`, not with `@Valid`, so an unknown caller gets no field feedback), then the room (`404`), then the time rules. A body that is not valid JSON is still answered with `400` before the user check.
+Checks run in this order: the user (`401`), then Bean Validation of the body (missing fields, title; run in `BookingService`, not with `@Valid`, so an unknown caller gets no field feedback), then the room (`404`), then the time rules, then the overlap (`409`). The room row is locked (`SELECT … FOR UPDATE`) from the room check until the transaction ends, so concurrent requests for the same room are checked one after the other and only one of two overlapping requests is stored. A body that is not valid JSON is still answered with `400` before the user check.
