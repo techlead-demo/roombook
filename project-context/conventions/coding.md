@@ -58,7 +58,8 @@ throw new ErrorResponseException(HttpStatus.CONFLICT, problem, null);
 - Single-file components with `<script setup lang="ts">`, then `<template>`, then `<style scoped>`.
 - Import with the `@/` alias (`@/api/rooms`), not long relative paths.
 - Two-space indentation, single quotes, no semicolons (match existing files).
-- Pages are routed with `vue-router@4`: routes in `src/router/index.ts`, `<RouterView />` in `App.vue`. Pages emit events (`book`, `booked`, `cancel`) and `App.vue` navigates; route params reach the page as typed props (`props: (route) => ({ ... })`). The header navigation shown in the mockups comes with RMB-3.
+- Pages are routed with `vue-router@4`: routes with a `name` in `src/router/index.ts`, `<RouterView />` in `App.vue`; route params reach the page as typed props (`props: (route) => ({ ... })`). The booking pages emit events (`book`, `booked`, `cancel`) and `App.vue` navigates; the admin pages navigate by route name (`{ name: 'manage-rooms' }`). Add header links as the mockups show them.
+- Shared visual classes (`.card`, `.muted`, `.btn*`, `.alert*`) live in `styles/base.css`; page-specific styles stay scoped.
 
 ### TypeScript
 - `strict` mode; no `any` (use `unknown` and narrow). `vue-tsc --noEmit` must pass (`make lint`).

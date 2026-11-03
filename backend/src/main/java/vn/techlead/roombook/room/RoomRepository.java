@@ -9,5 +9,9 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     List<Room> findByActiveTrueOrderByNameAsc();
 
+    List<Room> findAllByOrderByNameAsc();
+
     Optional<Room> findByName(String name);
+
+    Optional<Room> findByNameIgnoreCase(String name);
 }

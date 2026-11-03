@@ -29,9 +29,14 @@ public class FieldValidationException extends ErrorResponseException {
     /** The Bean Validation violations of a request body, with the JSON (snake_case) field names. */
     public static FieldValidationException of(Set<? extends ConstraintViolation<?>> violations) {
         return new FieldValidationException(violations.stream()
-                .map(violation -> new FieldError(jsonFieldName(violation.getPropertyPath().toString()), violation.getMessage()))
+                .map(violation -> new FieldError(jsonFieldName(propertyName(violation)), violation.getMessage()))
                 .sorted(Comparator.comparing(FieldError::field).thenComparing(FieldError::message))
                 .toList());
+    }
+
+    /** The property path without container element nodes: {@code equipment[0].<list element>} → {@code equipment[0]}. */
+    private static String propertyName(ConstraintViolation<?> violation) {
+        return violation.getPropertyPath().toString().replaceAll("\\.<[^>]+>", "");
     }
 
     /** Field names in {@code errors} use the JSON (snake_case) names, e.g. {@code startAt} → {@code start_at}. */

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterView, useRouter } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
 import UserPicker from '@/components/UserPicker.vue'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const router = useRouter()
 
 /** Shown on the room list after a booking; it lives only as long as the room list is shown. */
@@ -24,7 +26,10 @@ function showRooms(message: string | null): void {
 
 <template>
   <header class="app-header">
-    <span class="brand">RoomBook</span>
+    <RouterLink to="/" class="brand">RoomBook</RouterLink>
+    <nav class="nav" aria-label="Main">
+      <RouterLink v-if="userStore.isAdmin" :to="{ name: 'manage-rooms' }">Manage rooms</RouterLink>
+    </nav>
     <UserPicker />
   </header>
   <main class="app-main">
@@ -36,7 +41,8 @@ function showRooms(message: string | null): void {
         @booked="(message: string) => showRooms(message)"
         @cancel="showRooms(null)"
       />
-      <component :is="Component" v-else-if="Component" :success-message="successMessage" @book="openForm" />
+      <component :is="Component" v-else-if="route.name === 'rooms'" :success-message="successMessage" @book="openForm" />
+      <component :is="Component" v-else-if="Component" />
     </RouterView>
   </main>
 </template>
@@ -56,6 +62,24 @@ function showRooms(message: string | null): void {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-4);
+  margin-right: auto;
+  margin-left: var(--space-5);
+}
+
+.nav a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.nav a.router-link-active {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
 }
 
 .app-main {
