@@ -84,7 +84,7 @@ export function isQuarterHourTime(time: string): boolean {
   return match !== null && Number(match[2]) % 15 === 0
 }
 
-/** Display form of a calendar date (YYYY-MM-DD), e.g. "Mon 2 Nov 2026". */
+/** Display form of a calendar date (YYYY-MM-DD), e.g. "Mon 2 Nov 2026"; months always have three letters, as in the API's messages. */
 export function formatCalendarDate(date: string): string {
   const [year, month, day] = date.split('-').map(Number)
   const parts = Object.fromEntries(
@@ -92,5 +92,6 @@ export function formatCalendarDate(date: string): string {
       .formatToParts(new Date(Date.UTC(year, month - 1, day)))
       .map((part) => [part.type, part.value]),
   )
-  return `${parts.weekday} ${parts.day} ${parts.month} ${parts.year}`
+  // en-GB writes September as "Sept"
+  return `${parts.weekday} ${parts.day} ${parts.month.slice(0, 3)} ${parts.year}`
 }

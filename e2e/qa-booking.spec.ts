@@ -17,7 +17,7 @@ function displayDate(date: string): string {
       .formatToParts(new Date(`${date}T00:00:00Z`))
       .map((part) => [part.type, part.value]),
   )
-  return `${parts.weekday} ${parts.day} ${parts.month} ${parts.year}`
+  return `${parts.weekday} ${parts.day} ${parts.month.slice(0, 3)} ${parts.year}`
 }
 
 /** UTC instant of an office wall-clock time (the office zone is UTC+7 without DST). */

@@ -36,6 +36,10 @@ describe('time utils', () => {
     expect(formatCalendarDate('2026-11-02')).toBe('Mon 2 Nov 2026')
   })
 
+  it('RMB-2 AC-11: writes September with three letters, as in the API messages', () => {
+    expect(formatCalendarDate('2031-09-08')).toBe('Mon 8 Sep 2031')
+  })
+
   it('AC-6: converts an office date and wall-clock time to a UTC instant', () => {
     expect(toUtcInstant('2026-11-02', '11:00', ZONE)).toBe('2026-11-02T04:00:00Z')
     expect(toUtcInstant('2026-11-02', '00:00', ZONE)).toBe('2026-11-01T17:00:00Z')

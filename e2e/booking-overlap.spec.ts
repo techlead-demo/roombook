@@ -2,12 +2,12 @@ import { type APIRequestContext, expect, type Page, test } from '@playwright/tes
 
 const OFFICE_TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
-/**
- * A future office date (YYYY-MM-DD) that no other test uses: a random day 100–3099 days ahead, so that a rerun
- * against a reused server does not meet the bookings of the previous run.
- */
-function freshOfficeDate(): string {
-  const days = 100 + Math.floor(Math.random() * 3000)
+/** Random day 100–3099 days ahead, so that a rerun against a reused server does not meet the bookings of the previous run. */
+const FRESH_BASE_DAYS = 100 + Math.floor(Math.random() * 3000)
+
+/** A future office date (YYYY-MM-DD) that no other test uses; each test passes its own `offset`, so they never share a day. */
+function freshOfficeDate(offset: number): string {
+  const days = FRESH_BASE_DAYS + offset
   return new Intl.DateTimeFormat('en-CA', { timeZone: OFFICE_TIME_ZONE }).format(new Date(Date.now() + days * 86_400_000))
 }
 
@@ -18,7 +18,7 @@ function displayDate(date: string): string {
       .formatToParts(new Date(`${date}T00:00:00Z`))
       .map((part) => [part.type, part.value]),
   )
-  return `${parts.weekday} ${parts.day} ${parts.month} ${parts.year}`
+  return `${parts.weekday} ${parts.day} ${parts.month.slice(0, 3)} ${parts.year}`
 }
 
 /** UTC instant of an office date and time (the office is UTC+7 without daylight saving). */
@@ -54,7 +54,7 @@ async function fillForm(page: Page, values: { date?: string; start: string; end:
 
 test.describe('double booking', () => {
   test('AC-11, AC-12: an overlapping booking shows the API error and keeps the form; a free time then books', async ({ page, request }) => {
-    const date = freshOfficeDate()
+    const date = freshOfficeDate(0)
     await bookAsChiLe(request, 'Ha Long', date, '09:00', '10:00')
     const title = `Sprint planning ${Date.now()}`
 
@@ -82,7 +82,7 @@ test.describe('double booking', () => {
   })
 
   test('AC-13: after a 409 the side panel reloads and shows the booking made meanwhile', async ({ page, request }) => {
-    const date = freshOfficeDate()
+    const date = freshOfficeDate(1)
     await bookAsChiLe(request, 'Ha Long', date, '09:00', '10:00')
     await bookAsChiLe(request, 'Ha Long', date, '14:00', '15:30')
 
