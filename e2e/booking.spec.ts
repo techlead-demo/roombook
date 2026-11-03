@@ -25,7 +25,7 @@ function displayDate(date: string): string {
       .formatToParts(new Date(`${date}T00:00:00Z`))
       .map((part) => [part.type, part.value]),
   )
-  return `${parts.weekday} ${parts.day} ${parts.month} ${parts.year}`
+  return `${parts.weekday} ${parts.day} ${parts.month.slice(0, 3)} ${parts.year}`
 }
 
 function roomCard(page: Page, name: string) {
@@ -96,22 +96,31 @@ test.describe('booking a room', () => {
   })
 
   test("AC-7: a booking for today shows up in today's availability", async ({ page, request }) => {
-    const start = Math.ceil((officeMinutesNow() + 1) / 15) * 15 + 15
-    test.skip(start + 15 > 23 * 60 + 45, 'no 15-minute slot left today in office time')
+    // Sa Pa has no sample bookings; busy slots (e.g. from a retry or a reused server) are skipped, as BR-12 rejects overlaps
+    const rooms = await (await request.get('/api/rooms')).json()
+    const saPaId = rooms.find((room: { name: string }) => room.name === 'Sa Pa').id
+    const busyToday = async (): Promise<{ start_at: string; end_at: string }[]> =>
+      (await (await request.get(`/api/rooms/availability?date=${officeDate()}`)).json()).rooms.find(
+        (room: { room_id: number }) => room.room_id === saPaId,
+      ).busy
+    const instantOf = (minutes: number) => new Date(`${officeDate()}T${hhmm(minutes)}:00+07:00`).getTime()
+    const before = await busyToday()
+    let start = Math.ceil((officeMinutesNow() + 1) / 15) * 15 + 15
+    while (before.some((interval) => Date.parse(interval.start_at) < instantOf(start + 15) && Date.parse(interval.end_at) > instantOf(start))) {
+      start += 15
+    }
+    test.skip(start + 15 > 23 * 60 + 45, 'no free 15-minute slot left today in office time')
     const end = start + 15
 
-    await openForm(page, 'Hoi An')
+    await openForm(page, 'Sa Pa')
     await fillForm(page, { start: hhmm(start), end: hhmm(end), title: `Today ${Date.now()}` })
     await page.getByRole('button', { name: 'Book room' }).click()
-    await expect(page.getByRole('status')).toContainText(`Booked Hoi An, ${displayDate(officeDate())}, ${hhmm(start)}–${hhmm(end)}.`)
+    await expect(page.getByRole('status')).toContainText(`Booked Sa Pa, ${displayDate(officeDate())}, ${hhmm(start)}–${hhmm(end)}.`)
 
     if (start >= 8 * 60 && end <= 18 * 60) {
-      await expect(roomCard(page, 'Hoi An').getByText(`Busy ${hhmm(start)}–${hhmm(end)}`)).toBeAttached()
+      await expect(roomCard(page, 'Sa Pa').getByText(`Busy ${hhmm(start)}–${hhmm(end)}`)).toBeAttached()
     }
-    const availability = await (await request.get(`/api/rooms/availability?date=${officeDate()}`)).json()
-    const rooms = await (await request.get('/api/rooms')).json()
-    const hoiAnId = rooms.find((room: { name: string }) => room.name === 'Hoi An').id
-    const busy: { start_at: string; end_at: string }[] = availability.rooms.find((room: { room_id: number }) => room.room_id === hoiAnId).busy
+    const busy = await busyToday()
     const officeTime = (instant: string) =>
       new Intl.DateTimeFormat('en-GB', { timeZone: OFFICE_TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(instant))
     expect(busy.map((interval) => `${officeTime(interval.start_at)}–${officeTime(interval.end_at)}`)).toContain(`${hhmm(start)}–${hhmm(end)}`)

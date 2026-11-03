@@ -21,6 +21,7 @@ What goes where:
 - Error tests assert status, `contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)`, `$.status`, `$.title` and the relevant part of `$.detail`.
 - Time rules get boundary tests: office midnight (17:00 UTC), exactly on a limit and one step over, 15-minute step edges.
 - Code that needs "now" uses the `Clock` bean; tests that depend on now override it with `@MockitoBean Clock` or a `@TestConfiguration` returning `Clock.fixed(...)`.
+- Concurrency tests (e.g. `BookingConcurrencyTest`) are not `@Transactional` and delete their data afterwards. To force an interleaving, spy the repository with `@MockitoSpyBean` and hold one request at the critical step with a latch; repositories are JDK proxies, so forward through `mockingDetails(spy).getMockCreationSettings().getDefaultAnswer()` instead of `callRealMethod()`.
 
 ## Frontend
 - Pure functions: plain Vitest `describe`/`it`/`expect`, with fixed ISO strings and the zone `'Asia/Ho_Chi_Minh'`.
@@ -32,6 +33,7 @@ What goes where:
 - Tests run one at a time (`workers: 1`) against one database. Each test creates the data it needs through the UI or API, uses unique titles, and does not depend on other tests or on data created by them.
 - Locate by role, label and text (`getByRole('heading', { name: 'Rooms' })`, `getByLabel('Acting as')`); `getByTestId` only where the app defines a `data-testid`.
 - Times on screen are office time; a test that books uses future 15-minute-aligned times.
+- Overlapping bookings of a room are rejected (BR-12): a test that books today uses Sa Pa (no sample bookings) and skips slots already busy in `/api/rooms/availability`; a test that books another day picks a day and time no other test books in that room.
 - Browsers: `npx playwright install chromium` once per machine.
 
 ## Test data

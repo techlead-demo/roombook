@@ -259,6 +259,66 @@ describe('BookingFormPage', () => {
     expect(wrapper.emitted('booked')).toBeUndefined()
   })
 
+  const CONFLICT = 'Ha Long is already booked from 09:00 to 10:00 on Mon 2 Nov 2026. Choose another time or another room.'
+
+  it('RMB-2 AC-11: shows the overlap error above the form, keeps the inputs and reports no booking', async () => {
+    vi.mocked(createBooking).mockRejectedValue(new ApiError(409, { status: 409, title: 'Conflict', detail: CONFLICT }))
+    const wrapper = await mountForm()
+    await fill(wrapper, { start: '09:00', end: '10:00', title: 'Sprint planning' })
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.get('form .alert-danger').text()).toBe(CONFLICT)
+    expect(wrapper.get<HTMLInputElement>('#booking-date').element.value).toBe('2026-11-02')
+    expect(wrapper.get<HTMLInputElement>('#booking-start').element.value).toBe('09:00')
+    expect(wrapper.get<HTMLInputElement>('#booking-end').element.value).toBe('10:00')
+    expect(wrapper.get<HTMLInputElement>('#booking-title').element.value).toBe('Sprint planning')
+    expect(wrapper.emitted('booked')).toBeUndefined()
+  })
+
+  it('RMB-2 AC-13: reloads the side panel after a 409 and shows the new busy time', async () => {
+    const wrapper = await mountForm()
+    expect(wrapper.get('aside').text()).toContain('Already booked: 09:00–10:00, 14:00–15:30')
+
+    // Another user books 11:00–12:00 after the form loaded
+    vi.mocked(fetchAvailability).mockResolvedValue(
+      availability('2026-11-02', [
+        {
+          room_id: 1,
+          busy: [
+            { start_at: '2026-11-02T02:00:00Z', end_at: '2026-11-02T03:00:00Z' },
+            { start_at: '2026-11-02T04:00:00Z', end_at: '2026-11-02T05:00:00Z' },
+            { start_at: '2026-11-02T07:00:00Z', end_at: '2026-11-02T08:30:00Z' },
+          ],
+        },
+      ]),
+    )
+    const detail = 'Ha Long is already booked from 11:00 to 12:00 on Mon 2 Nov 2026. Choose another time or another room.'
+    vi.mocked(createBooking).mockRejectedValue(new ApiError(409, { status: 409, title: 'Conflict', detail }))
+    await fill(wrapper, { start: '11:00', end: '12:00', title: 'Sprint planning' })
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.get('form .alert-danger').text()).toBe(detail)
+    const aside = wrapper.get('aside')
+    expect(aside.text()).toContain('Already booked: 09:00–10:00, 11:00–12:00, 14:00–15:30')
+    expect(aside.findAll('.busy').map((block) => block.text())).toEqual(['Busy 09:00–10:00', 'Busy 11:00–12:00', 'Busy 14:00–15:30'])
+  })
+
+  it('does not reload the side panel after other API errors', async () => {
+    vi.mocked(createBooking).mockRejectedValue(new ApiError(401, { status: 401, title: 'Unauthorized', detail: 'Unknown user' }))
+    const wrapper = await mountForm()
+    await fill(wrapper, { start: '11:00', end: '12:00', title: 'Sprint planning' })
+    vi.mocked(fetchAvailability).mockClear()
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(fetchAvailability).not.toHaveBeenCalled()
+  })
+
   it('AC-17: disables "Book room" while the request is in progress', async () => {
     let resolve: (booking: Booking) => void = () => {}
     vi.mocked(createBooking).mockReturnValue(new Promise((r) => (resolve = r)))

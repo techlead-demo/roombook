@@ -103,6 +103,8 @@ async function submit(): Promise<void> {
     emit('booked', `Booked ${roomName}, ${formatCalendarDate(date)}, ${times}.`)
   } catch (e) {
     submitError.value = (e instanceof ApiError ? e.problem?.detail : undefined) ?? 'Could not book the room. Try again later.'
+    // 409: the room was booked meanwhile; show the booking that is in the way (BR-12)
+    if (e instanceof ApiError && e.status === 409) void loadAvailability()
   } finally {
     submitting.value = false
   }

@@ -50,6 +50,7 @@ Index: `bookings_room_start_idx (room_id, start_at)`.
 ## Invariants
 - All instants are UTC; no local date-time columns.
 - Booking start and end are on 15-minute steps (BR-2), the start is not in the past when the booking is made (BR-7), the title is trimmed and 1–100 characters (BR-8). Checked by `BookingService` on `POST /api/bookings`, not enforced by the database.
+- Bookings of the same room do not overlap (BR-12; half-open intervals, back-to-back is allowed). Checked by `BookingService` on `POST /api/bookings` while holding a pessimistic write lock on the `rooms` row (`RoomRepository.findByIdForUpdate`), so concurrent requests cannot both pass; not enforced by the database. Overlapping rows stored before RMB-2 are kept and only block new bookings.
 - The office day of a booking is derived, never stored (BR-4).
 
 ## Seed data (V2)
