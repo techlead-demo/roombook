@@ -1,7 +1,7 @@
 ---
 issue: RMB-4
 spec_version: 1
-revision: 3
+revision: 4
 ---
 
 # Implementation plan — RMB-4
@@ -96,3 +96,11 @@ Proposed `project-context/business/overview.md` changes (for the BA):
 - Office: "Meeting rooms (6 seed rooms), each with …" instead of "6 meeting rooms, each with …".
 - Main flows: add "**Manage rooms** (admins) — list all rooms with status and upcoming bookings; add or edit a room (unique name, capacity 1–100, equipment); take a room out of service, which cancels its upcoming bookings, or put it back into service."
 - Not in the product today: remove "Any administration screen."
+
+## Revision 4
+| Feedback item | Resolution |
+|---|---|
+| QA D-1 (AC-27, BR-9): a fractional capacity (`2.5`) is truncated and stored | Fixed: `spring.jackson.deserialization.accept-float-as-int=false` in `application.properties`, so Jackson rejects a fractional number for any integer property and the request is a `400` ProblemDetail with nothing stored. This applies to every endpoint (e.g. `room_id` of `POST /api/bookings` too), which is the intended behavior; api.md documents it. QA test `AdminRoomQaTest` › `tc38_br9_ac27_rejectsFractionalCapacityWith400` passes. |
+| CI: `make test` failed on `3826983` | Fixed: the only failure was the D-1 test above. |
+| [nit] Admin access checked twice per request; the interceptor is also a `@Configuration` | Fixed: `AdminAccessInterceptor` is now a plain `@Component`; the new `common/WebConfig` (`WebMvcConfigurer`) registers it for `/api/admin/**`. The service check stays as defense in depth (non-numeric `X-User-Id`, callers outside the web layer), now said in `RoomAdminService`'s Javadoc. overview.md and api.md updated. |
+| [major] `business/overview.md` still says there is no admin screen | Declined (third time, same reason as Revisions 2 and 3): the Engineer role may not commit under `project-context/business/**`. A BA or a human must make the edit; the proposed wording is in Revision 3. |

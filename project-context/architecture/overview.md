@@ -23,9 +23,9 @@ Packages by feature; each feature holds its controller, service, repository, ent
 
 | Package | Contents |
 |---|---|
-| `common/` | `ApiExceptionHandler` (ProblemDetail), `FieldValidationException` (service-side field errors as `400` + `errors`), `OfficeProperties` (`roombook.office.*`), `TimeConfig` (`Clock` bean) |
+| `common/` | `ApiExceptionHandler` (ProblemDetail), `FieldValidationException` (service-side field errors as `400` + `errors`), `OfficeProperties` (`roombook.office.*`), `TimeConfig` (`Clock` bean), `WebConfig` (MVC interceptors) |
 | `user/` | `User` entity, `Role`, `UserRepository`, `UserService` (also `requireAdmin`: 401/403 for admin-only endpoints), `UserController` (`GET /api/users`), `UserResponse` |
-| `room/` | `Room` entity, `Equipment`, `RoomRepository`, `RoomService`, `RoomController` (`GET /api/rooms`), `RoomResponse`; admin: `AdminRoomController` (`/api/admin/rooms`), `AdminAccessInterceptor` (401/403 for `/api/admin/**` before the body is read), `RoomAdminService`, `RoomRequest`, `AdminRoomResponse`, `DeactivateRoomResponse` |
+| `room/` | `Room` entity, `Equipment`, `RoomRepository`, `RoomService`, `RoomController` (`GET /api/rooms`), `RoomResponse`; admin: `AdminRoomController` (`/api/admin/rooms`), `AdminAccessInterceptor` (401/403 for `/api/admin/**` before the body is read; registered in `common/WebConfig`), `RoomAdminService`, `RoomRequest`, `AdminRoomResponse`, `DeactivateRoomResponse` |
 | `booking/` | `Booking` entity, `BookingRepository`, `RoomBookingCount` (query projection), `BookingService`, `BookingController` (`POST /api/bookings`), `BookingRequest`, `BookingResponse`, `SampleBookingSeeder` (startup sample data) |
 | `availability/` | `AvailabilityController` (`GET /api/rooms/availability`), `AvailabilityService`, `AvailabilityResponse` |
 

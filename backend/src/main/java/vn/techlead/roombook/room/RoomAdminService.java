@@ -28,7 +28,11 @@ import vn.techlead.roombook.booking.RoomBookingCount;
 import vn.techlead.roombook.common.FieldValidationException;
 import vn.techlead.roombook.user.UserService;
 
-/** Room administration for admins (RMB-4, BR-9, BR-10, BR-11). */
+/**
+ * Room administration for admins (RMB-4, BR-9, BR-10, BR-11). Every method checks admin access itself, although
+ * {@link AdminAccessInterceptor} already checks it for web requests: defense in depth for callers outside the web
+ * layer and for a non-numeric {@code X-User-Id}, which the interceptor passes on.
+ */
 @Service
 @Transactional(readOnly = true)
 public class RoomAdminService {
