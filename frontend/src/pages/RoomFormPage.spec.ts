@@ -94,6 +94,28 @@ describe('RoomFormPage', () => {
     expect(checkedEquipment(wrapper)).toEqual([])
   })
 
+  it('AC-9: ignores a stale load that ends after another room was opened', async () => {
+    let rejectFirst: (reason: unknown) => void = () => {}
+    let resolveSecond: (rooms: ReturnType<typeof seedAdminRooms>) => void = () => {}
+    vi.mocked(fetchAdminRooms)
+      .mockReturnValueOnce(new Promise((_, reject) => (rejectFirst = reject)))
+      .mockReturnValueOnce(new Promise((resolve) => (resolveSecond = resolve)))
+    const wrapper = await mountForm(3)
+    await wrapper.setProps({ id: 1 })
+    await flushPromises()
+
+    rejectFirst(new Error('network down'))
+    await flushPromises()
+    expect(wrapper.text()).toContain('Loading room…')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(wrapper.find('form').exists()).toBe(false)
+
+    resolveSecond(seedAdminRooms())
+    await flushPromises()
+    expect((wrapper.get('#room-name').element as HTMLInputElement).value).toBe('Ha Long')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+  })
+
   it('AC-6: opens an empty Add room form', async () => {
     const wrapper = await mountForm()
 

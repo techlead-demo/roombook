@@ -35,13 +35,16 @@ const formError = ref<string | null>(null)
 const nameError = ref<string | null>(null)
 const capacityError = ref<string | null>(null)
 
+// Only the latest load may touch the form; an older one ends silently when another room (or the Add form) was opened
+let currentLoad = 0
+
 async function loadRoom(id: number): Promise<void> {
+  const load = ++currentLoad
   loading.value = true
   loadError.value = null
   try {
     const room = (await fetchAdminRooms()).find((candidate) => candidate.id === id)
-    // Another room (or the Add form) was opened meanwhile
-    if (props.id !== id) return
+    if (load !== currentLoad) return
     if (!room) {
       loadError.value = `Room ${id} not found.`
       return
@@ -50,13 +53,16 @@ async function loadRoom(id: number): Promise<void> {
     capacity.value = room.capacity
     equipment.value = [...room.equipment]
   } catch (e) {
+    if (load !== currentLoad) return
     loadError.value = problemDetailOr(e, 'Could not load rooms. Try again later.')
   } finally {
-    loading.value = false
+    if (load === currentLoad) loading.value = false
   }
 }
 
 function resetForm(): void {
+  currentLoad++
+  loading.value = false
   name.value = ''
   capacity.value = ''
   equipment.value = []
