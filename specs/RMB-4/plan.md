@@ -1,7 +1,7 @@
 ---
 issue: RMB-4
 spec_version: 1
-revision: 2
+revision: 3
 ---
 
 # Implementation plan — RMB-4
@@ -82,3 +82,17 @@ Frontend: the second and third screens need routing, so `vue-router@4` is added 
 | [minor] AC-23: no test that the confirm button is disabled during deactivation | Fixed: `ManageRoomsPage.spec.ts` › "AC-23: disables the confirmation's 'Take out of service' button while the request runs". |
 
 Also, now that RMB-1 is merged: the booking parts of AC-7, AC-21 and AC-22 are tested (`POST /api/bookings` 404 / 201 in `ac21_…` / `ac28_ac22_…`; the booking form's Room select in `e2e/admin-rooms.spec.ts`). The admin e2e tests take their `E2E …` rooms out of service in `afterEach`, because RMB-1's e2e tests expect only the 6 seed rooms to be active. `FieldValidationException.of` drops container nodes from the path (`equipment[0].<list element>` → `equipment[0]`).
+
+## Revision 3
+| Feedback item | Resolution |
+|---|---|
+| [major] `business/overview.md` still says there is no admin screen (the admin asked for a fix in Jira) | Declined again, not by choice: the Engineer role may not change `project-context/business/**`, and the pipeline refuses to publish a branch that commits a path there, so editing it would block this whole revision. A BA or a human has to make the edit. Proposed wording below. |
+| [minor] AC-27: the 409 after a name race names the requested name | Fixed: `saveUniqueName` reads the existing room with `findByNameIgnoreCase` in a new read-only transaction (`REQUIRES_NEW` `TransactionTemplate`), because the failed flush makes the current persistence context unusable. If nothing is found, it falls back to the requested name. `RoomNameRaceTest` now expects `A room named "Ha Long" already exists.` for `ha long` and `HA LONG`. api.md updated. |
+| [minor] AC-9: a stale room load clears the loading state or shows its error | Fixed: `RoomFormPage` keeps a load token. Only the latest load sets the fields, `loadError` and `loading`, and `resetForm` invalidates running loads. Test "AC-9: ignores a stale load that ends after another room was opened". |
+| [nit] AC-3: unknown equipment value or malformed JSON gives 400 before 401/403 | Fixed: `AdminAccessInterceptor` (a `HandlerInterceptor` on `/api/admin/**`) runs `requireAdmin` before the body is read. A non-numeric `X-User-Id` is left to the controller, as before. The service keeps its own check. Test `ac3_checksAccessBeforeReadingAnUnreadableBody`. api.md updated. |
+
+Proposed `project-context/business/overview.md` changes (for the BA):
+- Users, Office admin: "Responsible for the rooms. Manages them on the Manage rooms screen (link in the header, admins only)." instead of "Has no extra screens yet."
+- Office: "Meeting rooms (6 seed rooms), each with …" instead of "6 meeting rooms, each with …".
+- Main flows: add "**Manage rooms** (admins) — list all rooms with status and upcoming bookings; add or edit a room (unique name, capacity 1–100, equipment); take a room out of service, which cancels its upcoming bookings, or put it back into service."
+- Not in the product today: remove "Any administration screen."
