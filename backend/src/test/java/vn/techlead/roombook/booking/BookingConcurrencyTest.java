@@ -1,6 +1,8 @@
 package vn.techlead.roombook.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import java.time.Instant;
@@ -10,16 +12,21 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import vn.techlead.roombook.booking.BookingControllerTest.TestClock;
@@ -41,7 +48,7 @@ class BookingConcurrencyTest {
     @Autowired
     MockMvc mockMvc;
 
-    @Autowired
+    @MockitoSpyBean
     BookingRepository bookingRepository;
 
     @Autowired
@@ -60,8 +67,30 @@ class BookingConcurrencyTest {
         bookingRepository.deleteAll();
     }
 
+    /**
+     * Holds the first request after its overlap check until the second request runs its own check (or 500 ms pass,
+     * well below H2's lock timeout). Without the room lock both checks find no conflict and both requests insert;
+     * with it the second request waits on the room row and only checks after the first has committed.
+     */
+    private void holdFirstOverlapCheckUntilSecondArrives() {
+        // The repository is a JDK proxy: Spring's spy forwards to it through its default answer, not a real method
+        Answer<?> real = Mockito.mockingDetails(bookingRepository).getMockCreationSettings().getDefaultAnswer();
+        AtomicInteger calls = new AtomicInteger();
+        CountDownLatch secondArrived = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            if (calls.incrementAndGet() > 1) {
+                secondArrived.countDown();
+                return real.answer(invocation);
+            }
+            Object result = real.answer(invocation);
+            secondArrived.await(500, TimeUnit.MILLISECONDS);
+            return result;
+        }).when(bookingRepository).findOverlappingInRoom(any(), any(), any());
+    }
+
     @Test
     void ac10ExactlyOneOfTwoSimultaneousRequestsIsBooked() throws Exception {
+        holdFirstOverlapCheckUntilSecondArrives();
         long haLong = roomRepository.findByName("Ha Long").orElseThrow().getId();
         long binh = userRepository.findByEmail("binh.tran@roombook.local").orElseThrow().getId();
         long chi = userRepository.findByEmail("chi.le@roombook.local").orElseThrow().getId();
