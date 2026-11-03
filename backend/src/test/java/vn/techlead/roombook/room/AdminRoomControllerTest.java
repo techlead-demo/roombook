@@ -124,6 +124,22 @@ class AdminRoomControllerTest {
         }
     }
 
+    @Test
+    void ac3_checksAccessBeforeReadingAnUnreadableBody() throws Exception {
+        String[] unreadable = { "{\"name\":\"Nha Trang\",\"capacity\":10,\"equipment\":[\"PROJECTOR\"]}", "{not json" };
+        for (String body : unreadable) {
+            for (MockHttpServletRequestBuilder request : new MockHttpServletRequestBuilder[] {
+                    post("/api/admin/rooms"), put("/api/admin/rooms/3") }) {
+                mockMvc.perform(request.header("X-User-Id", "2").contentType(MediaType.APPLICATION_JSON).content(body))
+                        .andExpect(status().isForbidden())
+                        .andExpect(jsonPath("$.detail").value("Only admins can manage rooms."));
+            }
+            mockMvc.perform(post("/api/admin/rooms").contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.detail").value("Unknown user"));
+        }
+    }
+
     // --- List (AC-24, AC-4) ---
 
     @Test

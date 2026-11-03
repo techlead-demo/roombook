@@ -17,7 +17,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.ErrorResponseException;
 
 import vn.techlead.roombook.booking.BookingRepository;
@@ -38,14 +41,18 @@ public class RoomAdminService {
     private final UserService userService;
     private final Clock clock;
     private final Validator validator;
+    private final TransactionTemplate newReadTransaction;
 
     public RoomAdminService(RoomRepository roomRepository, BookingRepository bookingRepository,
-            UserService userService, Clock clock, Validator validator) {
+            UserService userService, Clock clock, Validator validator, PlatformTransactionManager transactionManager) {
         this.roomRepository = roomRepository;
         this.bookingRepository = bookingRepository;
         this.userService = userService;
         this.clock = clock;
         this.validator = validator;
+        this.newReadTransaction = new TransactionTemplate(transactionManager);
+        this.newReadTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.newReadTransaction.setReadOnly(true);
     }
 
     /** All rooms, in service and out of service, ordered by name, with their number of upcoming bookings. */
@@ -132,7 +139,8 @@ public class RoomAdminService {
 
     /**
      * Saves and flushes; a concurrent save of the same name that passed {@link #requireUniqueName} first is
-     * rejected by the unique index {@code rooms_name_key_idx} and answered with the same {@code 409}.
+     * rejected by the unique index {@code rooms_name_key_idx} and answered with the same {@code 409}, naming the
+     * room that now holds the name.
      */
     private Room saveUniqueName(String name, Supplier<Room> save) {
         try {
@@ -140,10 +148,18 @@ public class RoomAdminService {
         } catch (DataIntegrityViolationException ex) {
             String cause = String.valueOf(ex.getMostSpecificCause().getMessage());
             if (cause.toLowerCase(Locale.ROOT).contains(NAME_INDEX)) {
-                throw nameTaken(name);
+                throw nameTaken(existingRoomName(name));
             }
             throw ex;
         }
+    }
+
+    /** The failed flush leaves the current persistence context unusable, so the name is read in a new transaction. */
+    private String existingRoomName(String name) {
+        String existing = newReadTransaction.execute(status -> roomRepository.findByNameIgnoreCase(name)
+                .map(Room::getName)
+                .orElse(null));
+        return existing != null ? existing : name;
     }
 
     private static ErrorResponseException nameTaken(String existingName) {

@@ -2,6 +2,7 @@ package vn.techlead.roombook.room;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mockingDetails;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -12,6 +13,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -22,8 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * RMB-4 AC-27: two saves of the same name at the same time. The name check of the second request runs before the
- * first one is stored (simulated: the check finds nothing), so the unique index rejects the save; the answer is
- * still the {@code 409} ProblemDetail, not a {@code 500}.
+ * first one is stored (simulated: the first check finds nothing), so the unique index rejects the save; the answer
+ * is still the {@code 409} ProblemDetail, not a {@code 500}, and names the room that holds the name.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -38,7 +40,9 @@ class RoomNameRaceTest {
 
     @BeforeEach
     void nameCheckMissesTheConcurrentRoom() {
-        doReturn(Optional.empty()).when(roomRepository).findByNameIgnoreCase(anyString());
+        // Later lookups go to the real repository (the spy's default answer delegates to it)
+        Answer<?> realRepository = mockingDetails(roomRepository).getMockCreationSettings().getDefaultAnswer();
+        doReturn(Optional.empty()).doAnswer(realRepository).when(roomRepository).findByNameIgnoreCase(anyString());
     }
 
     @Test
@@ -49,7 +53,7 @@ class RoomNameRaceTest {
                 .andExpect(status().isConflict())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.detail").value("A room named \"ha long\" already exists."));
+                .andExpect(jsonPath("$.detail").value("A room named \"Ha Long\" already exists."));
     }
 
     @Test
@@ -59,6 +63,6 @@ class RoomNameRaceTest {
                         .content("{\"name\":\"HA LONG\",\"capacity\":6,\"equipment\":[]}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.detail").value("A room named \"HA LONG\" already exists."));
+                .andExpect(jsonPath("$.detail").value("A room named \"Ha Long\" already exists."));
     }
 }
