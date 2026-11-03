@@ -1,7 +1,7 @@
 ---
 issue: RMB-2
 spec_version: 1
-revision: 0
+revision: 2
 ---
 
 # Implementation plan — RMB-2
@@ -30,7 +30,8 @@ New: after a `409` answer it calls `loadAvailability()` so the side panel shows 
 | API | backend/.../booking/BookingRepository.java | `findOverlappingInRoom(roomId, from, to)` ordered by start |
 | API | backend/.../booking/BookingService.java | Lock room, overlap check, 409 message |
 | Web | frontend/src/pages/BookingFormPage.vue | Reload availability after a 409 |
-| Tests | BookingControllerTest, new BookingConcurrencyTest, BookingFormPage.spec.ts, e2e/booking-overlap.spec.ts | AC tests |
+| Tests | new BookingOverlapTest, new BookingConcurrencyTest, BookingFormPage.spec.ts, e2e/booking-overlap.spec.ts | AC tests |
+| Tests | e2e/booking.spec.ts | RMB-1 AC-7 books a free slot of Sa Pa (no sample bookings), since BR-12 now rejects overlaps |
 
 ## Data model changes
 None. data-model.md: new invariant (BR-12, enforced by `BookingService` with a room row lock).
@@ -38,20 +39,20 @@ None. data-model.md: new invariant (BR-12, enforced by `BookingService` with a r
 ## Acceptance criteria → tests
 | AC | Test(s) |
 |---|---|
-| AC-1 | BookingControllerTest › AC-1 rejects identical times with 409 |
-| AC-2 | BookingControllerTest › AC-2 rejects partial overlaps (parameterized) |
-| AC-3 | BookingControllerTest › AC-3 accepts adjacent bookings (parameterized) |
-| AC-4 | BookingControllerTest › AC-4 names the earliest conflicting booking |
-| AC-5 | BookingControllerTest › AC-5 other room is not a conflict |
-| AC-6 | BookingControllerTest › AC-6 own booking conflicts |
-| AC-7 | BookingControllerTest › AC-7 ongoing booking conflicts |
-| AC-8 | BookingControllerTest › AC-8 cross-midnight message |
-| AC-9 | BookingControllerTest › AC-9 earlier checks answer first (several) |
-| AC-10 | BookingConcurrencyTest › AC-10 concurrent requests store one booking |
-| AC-11 | BookingFormPage.spec.ts › AC-11; e2e/booking-overlap.spec.ts › AC-11, AC-12 |
-| AC-12 | e2e/booking-overlap.spec.ts › AC-11, AC-12 |
-| AC-13 | BookingFormPage.spec.ts › AC-13; e2e/booking-overlap.spec.ts › AC-13 |
-| AC-14 | BookingControllerTest › AC-14 existing overlaps are kept and block new bookings |
+| AC-1 | BookingOverlapTest › ac1RejectsTheSameTimesWith409 |
+| AC-2 | BookingOverlapTest › ac2RejectsEveryKindOfOverlap (parameterized) |
+| AC-3 | BookingOverlapTest › ac3AcceptsBackToBackBookings (parameterized) |
+| AC-4 | BookingOverlapTest › ac4NamesTheEarliestStartingConflict |
+| AC-5 | BookingOverlapTest › ac5AcceptsTheSameTimeInAnotherRoom |
+| AC-6 | BookingOverlapTest › ac6RejectsOverlapWithTheActingUsersOwnBooking |
+| AC-7 | BookingOverlapTest › ac7RejectsOverlapWithABookingInProgress |
+| AC-8 | BookingOverlapTest › ac8NamesBothDatesForABookingAcrossMidnight |
+| AC-9 | BookingOverlapTest › ac9UnknownUserIsAnsweredBeforeTheOverlap, ac9FieldErrorsAreAnsweredBeforeTheOverlap (parameterized), ac9PastStartIsAnsweredBeforeTheOverlap |
+| AC-10 | BookingConcurrencyTest › ac10ExactlyOneOfTwoSimultaneousRequestsIsBooked |
+| AC-11 | BookingFormPage.spec.ts › RMB-2 AC-11: shows the overlap error above the form, keeps the inputs and reports no booking; e2e/booking-overlap.spec.ts › AC-11, AC-12: an overlapping booking shows the API error and keeps the form; a free time then books |
+| AC-12 | e2e/booking-overlap.spec.ts › AC-11, AC-12: an overlapping booking shows the API error and keeps the form; a free time then books |
+| AC-13 | BookingFormPage.spec.ts › RMB-2 AC-13: reloads the side panel after a 409 and shows the new busy time; e2e/booking-overlap.spec.ts › AC-13: after a 409 the side panel reloads and shows the booking made meanwhile |
+| AC-14 | BookingOverlapTest › ac14KeepsExistingOverlapsAndRejectsNewBookingsThatOverlapThem |
 
 ## Context updates
 - project-context/architecture/api.md: `409` row, check order, remove "Overlapping bookings are still accepted".
@@ -61,3 +62,12 @@ None. data-model.md: new invariant (BR-12, enforced by `BookingService` with a r
 - The room row lock waits for H2's lock timeout; bookings are short transactions, so contention is negligible
   for a small office.
 - Existing overlapping rows stay (A-6); they are only read.
+
+## Revision 2
+| Feedback item | Resolution |
+|---|---|
+| [blocker] CI e2e: RMB-1 AC-7 (`e2e/booking.spec.ts`) collides with the seeded Hoi An 10:30–11:30 booking | Fixed: the test books Sa Pa (no sample bookings) and skips every 15-minute slot already busy in today's availability (also covers a CI retry or a reused server). The other e2e tests book future days only, so no sample booking can hit them. |
+| [minor] AC-10 concurrency test does not prove the lock is needed | Fixed: a `@MockitoSpyBean` on `BookingRepository` holds the first request after its overlap query until the second request runs its own (max 500 ms, below H2's lock timeout). Verified locally: with `findById` instead of `findByIdForUpdate` the test fails with `[201, 201]`. |
+| [minor] Plan names BookingControllerTest instead of BookingOverlapTest | Fixed: Changes table and AC → test mapping list the actual classes and test names. |
+| [nit] The two overlap e2e tests can pick the same random date | Fixed: both dates come from one random base per run (offset 0 and 1). |
+| Found while running e2e (beyond the feedback): en-GB `Intl` writes September as "Sept", the API as "Sep", so the overlap e2e test failed for September dates | Fixed: `formatCalendarDate` (frontend) and the e2e `displayDate` helpers use three-letter months; Vitest case for September added. |
